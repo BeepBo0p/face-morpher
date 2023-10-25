@@ -25,28 +25,41 @@ class Image:
         np.array(W,H,3) data: The image data. The shape of the array is (W, H, 3) where W is the width, H is the height and 3 is the number of channels (RGB).
     """
     
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self, width: int, height: int, channels: int=3) -> None:
         self.width = width
         self.height = height
-        self.data = np.zeros((width, height, 3), dtype=np.uint8)
+        self.channels = channels
+        self.data = np.zeros((width, height, channels), dtype=np.uint8)
         
 
 # Utility functions
 
-def is_valid_image(image: Image) -> bool:
+def is_valid_image(image: Image, rgb: bool=True) -> bool:
     """
     Checks if the given image is valid.
     
     Args:
         image: The image to check.
+        rgb: Whether to check if the image is in RGB format or grayscale.
         
     Returns:
         True if the image is valid, False otherwise.
     """
     width, height, channels = image.data.shape
     
-    if(width == 0 or height == 0 or channels != 3):
+    # Check if the width and height are positive
+    if(width <= 0 or height <= 0):
         return False
+    
+    # Check if the number of channels is 3 (RGB) or 1 (grayscale)
+    if(rgb and channels != 3):
+        return False
+    
+    if(not rgb and channels != 1):
+        return False
+    
+    return True
+    
     
     return True
     
@@ -108,6 +121,22 @@ def show_image(image: Image) -> None:
     """
     plt.imshow(image.data)
     plt.show()
+
+def convert_to_grayscale(image: Image) -> Image:
+    """
+    Converts the given image to grayscale.
+    
+    Args:
+        image: The image to convert.
+        
+    Returns:
+        The converted image.
+    """
+    grayscale_image = Image(image.width, image.height)
+    
+    grayscale_image.data = np.dot(image.data[...,:3], [0.299, 0.587, 0.114])
+    
+    return grayscale_image
 
 # Test the code
 if(__name__ == "__main__"):
