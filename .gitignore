@@ -1,2 +1,4 @@
 .DS_Store
 src/backend/__pycache__
+output/
+misc/
