@@ -37,13 +37,13 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
         np.ndarray: _description_
     """
     
-    # First we deep copy the image and pad it
+    # First we deep copy the image and pad it. This should allow us to handle the edge cases more easily.
+    # NOTE: When actually sampling we must add 1 to the coordinates to account for the padding.
     img_padded = copy.deepcopy(img.data)
-    
     img_padded = np.pad(img_padded, 1, mode='edge')
     
     
-    # If the coordinates are out of bounds, project them onto the edge
+    # If the coordinates are out of bounds, project them onto the nearest edge
     if(x < 0):
         x = 0
     elif(x > img.width):
@@ -55,30 +55,160 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
         y = img.height - 1
         
     # Now we must find the 4 nearest pixels to the given coordinates
-    # We start by transforming the coordinates from pixel edges to pixel centers
+
+    top_edge = round(y - 0.00001) == 0
+    bottom_edge = round(y + 0.00001) == img.height
+    left_edge = round(x - 0.00001) == 0
+    right_edge = round(x + 0.00001) == img.width
     
-    w,h = img.width, img.height
+    top_left = top_edge and left_edge
+    top_right = top_edge and right_edge
+    bottom_left = bottom_edge and left_edge
+    bottom_right = bottom_edge and right_edge
     
-    x_t, y_t = coordinate_transform(x, y, w+1, h+1, w, h)
+    if(top_left):
+        #print("Top left corner")
+        return img_padded[1][1]
     
-    print(f'x_t: {x_t}, y_t: {y_t}')
+    if(top_right):
+        #print("Top right corner")
+        return img_padded[-2][1]
     
-    # if the coordinates are integers, we are done and can return the value at the given coordinates (accounting for padding)
-    if x_t == int(x_t) and y_t == int(y_t):
-        return img_padded[int(x_t)+1][int(y_t)+1]
+    if(bottom_left):
+        #print("Bottom left corner")
+        return img_padded[1][-2]
+    
+    if(bottom_right):
+        #print("Bottom right corner")
+        return img_padded[-2][-2]
+    
+    # If we reach this point, we know that the coordinates are not on the corners of the image
+    
+    if(top_edge):
+        #print("Top edge")
+        y = 1
+        x_s = x - 0.5
+        x_s += 1 # add 1 to account for padding
         
+        left_x = np.floor(x_s).astype(int)
+        right_x = np.ceil(x_s).astype(int)
+        
+        left_pixel = img_padded[left_x][y]
+        right_pixel = img_padded[right_x][y]
+        
+        left_dist = np.abs(left_x - x_s)
+        right_dist = np.abs(right_x - x_s)
+        
+        sum_dist = left_dist + right_dist
+        
+        if(sum_dist == 0):
+            return left_pixel
+        
+        left_weight = 1 - (left_dist / sum_dist)
+        right_weight = 1 - (right_dist / sum_dist)
+        
+        return left_pixel * left_weight + right_pixel * right_weight
+    
+    if(bottom_edge):
+        #print("Bottom edge")
+        y = -2
+        x_s = x - 0.5
+        x_s += 1 # add 1 to account for padding
+        
+        left_x = np.floor(x_s).astype(int)
+        right_x = np.ceil(x_s).astype(int)
+        
+        left_pixel = img_padded[left_x][y]
+        right_pixel = img_padded[right_x][y]
+        
+        left_dist = np.abs(left_x - x_s)
+        right_dist = np.abs(right_x - x_s)
+        
+        sum_dist = left_dist + right_dist
+        
+        if(sum_dist == 0):
+            return left_pixel
+        
+        left_weight = 1 - (left_dist / sum_dist)
+        right_weight = 1 - (right_dist / sum_dist)
+        
+        return left_pixel * left_weight + right_pixel * right_weight
+    
+    if(left_edge):
+        #print("Left edge")
+        x = 1
+        y_s = y - 0.5
+        y_s += 1 # add 1 to account for padding
+        
+        top_y = np.floor(y_s).astype(int)
+        bottom_y = np.ceil(y_s).astype(int)
+
+        
+        top_pixel = img_padded[x][top_y]
+        bottom_pixel = img_padded[x][bottom_y]
+        
+        top_dist = np.abs(top_y - y_s)
+        bottom_dist = np.abs(bottom_y - y_s)
+        
+        sum_dist = top_dist + bottom_dist
+        
+        if(sum_dist == 0):
+            return top_pixel
+        
+        top_weight = 1 - (top_dist / sum_dist)
+        bottom_weight = 1 - (bottom_dist / sum_dist)
+        
+        return top_pixel * top_weight + bottom_pixel * bottom_weight
+    
+    if(right_edge):
+        #print("Right edge")
+        x = -2
+        y_s = y - 0.5
+        y_s += 1 # add 1 to account for padding
+        
+        top_y = np.floor(y_s).astype(int)
+        bottom_y = np.ceil(y_s).astype(int)
+        
+        top_pixel = img_padded[x][top_y]
+        bottom_pixel = img_padded[x][bottom_y]
+        
+        top_dist = np.abs(top_y - y_s)
+        bottom_dist = np.abs(bottom_y - y_s)
+        
+        sum_dist = top_dist + bottom_dist
+        
+        if(sum_dist == 0):
+            return top_pixel
+        
+        top_weight = 1 - (top_dist / sum_dist)
+        bottom_weight = 1 - (bottom_dist / sum_dist)
+        
+        return top_pixel * top_weight + bottom_pixel * bottom_weight
+
+        
+        
+    # If we reach this point, we know that the coordinates are not on the edges of the image
+    # Now we can safely transform the coordinates to the original image
+    
+    x_t = x - 0.5
+    y_t = y - 0.5
+    
+    # We padded the image so we must add 1 to the coordinates
+    x_t += 1
+    y_t += 1
+    
     sample = np.array([x_t, y_t])
     
-    top_left_x = np.array([np.floor(x_t), np.floor(y_t)])
-    top_right_x = np.array([np.ceil(x_t), np.floor(y_t)])
-    bottom_left_x = np.array([np.floor(x_t), np.ceil(y_t)])
-    bottom_right_x = np.array([np.ceil(x_t), np.ceil(y_t)])
+    top_left_px = np.array([np.floor(x_t), np.floor(y_t)])
+    top_right_px = np.array([np.ceil(x_t), np.floor(y_t)])
+    bottom_left_px = np.array([np.floor(x_t), np.ceil(y_t)])
+    bottom_right_px = np.array([np.ceil(x_t), np.ceil(y_t)])
     
-    nearest_pixels = np.array([top_left_x, top_right_x, bottom_left_x, bottom_right_x])
+    nearest_pixels = np.array([top_left_px, top_right_px, bottom_left_px, bottom_right_px])
     
-    for pixel in nearest_pixels:
-        print(f'Nearest pixel: {pixel}', end=' | ')
-    print("")
+    #for pixel in nearest_pixels:
+    #    print(f'Nearest pixel: {pixel}', end=' | ')
+    #print("")
     
     # Cast the coordinates to integers
     nearest_pixels = nearest_pixels.astype(int)
@@ -88,7 +218,9 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     
     for i in range(4):
         #compute euclidean distance and save to distance vector
-        distances[i] = np.linalg.norm(nearest_pixels[i] - sample)
+        distances[i] = np.linalg.norm(nearest_pixels[i] - sample)   
+        #print(f'Calculated distance: {np.linalg.norm(nearest_pixels[i] - sample)}', end=' | ')
+    #print("")
         
     nearest_values = []
     
@@ -98,7 +230,7 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
                 
         # Since the image is padded we must add 1 to the coordinates
         nearest_values.append(img_padded[i][j])
-        
+               
     # we then normalise the distances
     distances = distances / np.sum(distances)
     
@@ -111,9 +243,27 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     # Initialise our sample value
     sampled_value = nearest_values[0] * 0    
     
+    # we solve a matrix equation to find the weights for each pixel
+    
+    vec = np.array([1, x_t, y_t, x_t * y_t])
+    
+    x_1 = nearest_pixels[0][0]
+    y_1 = nearest_pixels[0][1]
+    x_2 = nearest_pixels[-1][0]
+    y_2 = nearest_pixels[-1][1]
+    
+
+    
+    weights = np.array([
+        ((x_2 - x_t) * (y_2 - y_t))/((x_2 - x_1) * (y_2 - y_1)),
+        ((x_t - x_1) * (y_2 - y_t))/((x_2 - x_1) * (y_2 - y_1)),
+        ((x_2 - x_t) * (y_t - y_1))/((x_2 - x_1) * (y_2 - y_1)),
+        ((x_t - x_1) * (y_t - y_1))/((x_2 - x_1) * (y_2 - y_1))
+    ])
+    
     for i in range(4):
         
-        weight = 1 - distances[i]
+        weight = weights[i]
         
         sampled_value += nearest_values[i] * weight
         
@@ -154,10 +304,8 @@ def coordinate_transform(x: float, y: float, width_src: int, height_src: int, wi
     return x_t, y_t
     
     pass
-    
-    
-# Test the different functions
-if __name__ == "__main__":
+
+def test_bilinear_sampling():
     
     print("=========== Testing bilinear sampling ===========")
     
@@ -170,18 +318,45 @@ if __name__ == "__main__":
             print(row) """    
             
     outer_corners = np.array([[0,0], [1,0], [0,1], [1,1]])
-    pixel_centers = np.array([[0.25, 0.25], [0.25, 0.75], [0.75, 0.25], [0.75, 0.75]])
+    pixel_centers = np.array([[0.5, 0.5], [1.5, 0.5], [0.5, 1.5], [1.5, 1.5]])
     
     for i in outer_corners:
         print(f'Sampled value at {i[0]}, {i[1]}: {bilinear_sampling(sample_image, i[0], i[1])}')
         print('\n')
         
-    """     for i in pixel_centers:
+    for i in pixel_centers:
             print(f'Sampled value at {i[0]}, {i[1]}: {bilinear_sampling(sample_image, i[0], i[1])}')
-    """                
+                    
     
     mean = np.mean(sample_image.data)
     
-    mean_sample = bilinear_sampling(sample_image, 0.5, 0.5)
+    mean_sample = bilinear_sampling(sample_image, 1, 1)
     
     print(f'Mean: {mean}, Mean sample: {mean_sample}')
+    
+    almost_mean = bilinear_sampling(sample_image, 1.1, 1)
+    
+    print(f'Almost mean: {almost_mean}')
+    
+    resolution = 1000
+
+    
+    sampled_image = np.zeros((resolution+1, resolution+1))
+    
+    for h in range(resolution + 1):
+        h_t = h / resolution * 2
+        
+        for w in range(resolution + 1):
+            w_t = w / resolution * 2
+            
+            #print(f'Sampling at {w_t}, {h_t}')
+            sampled_image[w][h] = bilinear_sampling(sample_image, w_t, h_t)        
+        
+        
+    plt.imshow(sampled_image, cmap='gray')
+    plt.show()
+    
+# Test the different functions
+if __name__ == "__main__":
+    
+    test_bilinear_sampling()
