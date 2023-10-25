@@ -5,9 +5,22 @@ from img_utils import *
 import numpy as np
 import copy
 
+def get_delta(x: np.array, y: np.array) -> np.array:
+    """Computes the delta vector between the 2 given vectors.
+    The delta vector is the difference between the 2 vectors.
+    
+    Args:
+        x (np.array): _description_
+        y (np.array): _description_
+    
+    Returns:
+        np.array: _description_
+    """
+    return y - x
+
+
 def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, alpha: float):
     pass
-
 
 def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     """Bilinearly samples a value from the image at the given coordinates.
@@ -268,8 +281,7 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
         sampled_value += nearest_values[i] * weight
         
     return sampled_value
-
-    
+  
 def coordinate_transform(x: float, y: float, width_src: int, height_src: int, width_dst: int, height_dst: int) -> (float, float):
     """Computes coordinate transform from source image to destination image.
     Assumes that the source is bigger than the destination.
