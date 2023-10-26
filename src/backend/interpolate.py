@@ -22,6 +22,25 @@ def get_delta(x: np.array, y: np.array) -> np.array:
 
 
 def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, n: int, q: float) -> list[Image]:
+    """Creates a sequence of interpolated images using facial features as guide.
+    Features are interpolated are linearly interpolated between the 2 images along with the colour values at each time step t (out of n+1 steps).
+    Each shifted feature is then used to compute a delta field using IDW to describe the shift of all other pixels in the image.
+    The delta field describes the shift of each pixel in the image from the first image to the second image.
+    Afterwards, the delta field is used to bilinearly sample colour from both images and linearly interpolate between them.
+    The interpolated image is then stored in a list and the list is returned.
+    
+
+    Args:
+        img1 (Image): image of the first person
+        img2 (Image): image of the second person
+        features1 (np.ndarray): detected facial features of the first person
+        features2 (np.ndarray): detected facial features of the second person
+        n (int): number of timesteps to interpolate between the 2 images
+        q (float): parameter to control the influence of the closest points in the IDW interpolation
+
+    Returns:
+        list[Image]: list of interpolated images starting with the first image and ending with the second image
+    """
     
     # Make sure the features map 1 to 1
     assert features1.shape == features2.shape
@@ -83,14 +102,70 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
             # Store the delta values to use for sampling later
             interpolated_delta_field[x][y] = interpolated_pos_delta[0]
             
+            #TODO: Verify that we can use the same delta field for both images.
+            
         # Next steps:
         # 1. Compute the rest of the delta field using IDW
+        
+        for x in range(img1.width):
+            for y in range(img1.height):
+                
+                # Skip the pixels that are already interpolated
+                if(interpolated_image[x][y].any()):
+                    continue
+                                
+                # Compute the delta field
+                interpolated_delta_field[x][y] = inverse_distance_weighting(np.array([x,y]), interpolated_features, interpolated_pos_delta, q)
+        
         # 2. Using the delta field, bilinearly sample from both images and linearly interpolate between them
+        
+        for x in range(img1.width):
+            for y in range(img1.height):
+                
+                # Skip the pixels that are already interpolated
+                if(interpolated_image[x][y].any()):
+                    continue
+                
+                # Get the delta field at the current pixel
+                delta = interpolated_delta_field[x][y]
+                
+                # Sample from the 2 images
+                img1_sample = bilinear_sampling(img1, x + delta[0], y + delta[1])
+                
+                #TODO: Verify that we can use the same delta field for both images
+                img2_sample = bilinear_sampling(img2, x - delta[0], y - delta[1])
+                
+                # weights are the time distance from the first to second image
+                
+                
+                # Compute the bilinear sampling
+                interpolated_image[x][y] = img1_sample * (1 - t) + img2_sample * t
+        
         # 3. Store the interpolated image in a list
+        
+        interpolated_image_list.append(interpolated_image)
+        
+    # Append the second image to the list
+    interpolated_image_list.append(img2.data)
+    
+    return interpolated_image_list
         
 
     
-def inverse_distance_weighting(img1: Image, img2: Image, delta_field: np.ndarray, q: float) -> np.ndarray:
+def inverse_distance_weighting(point: np.array, interpolants: np.ndarray, interpolants_value: np.ndarray, q: float) -> np.ndarray:
+    """Given a point and a set of interpolants (and their associated value) and a q value, 
+    computes the interpolated value at the given point. Increasing q will increase the influence of the closest points.
+
+    Args:
+        point (np.array): Point to compute the interpolated value at.
+        interpolants (np.ndarray): Coordinates of the interpolants.
+        interpolants_value (np.ndarray): Value of the interpolants.
+        q (float): Parameter to control the influence of the closest points.
+
+    Returns:
+        np.ndarray: Interpolate value at the given point.
+    """
+    
     pass
    
     
