@@ -6,14 +6,22 @@ from backend.img_utils import *
 import backend.detect_face_features as dff
 import backend.interpolate as interp
 import backend.project_to_gan as ptg
+import os
 
 
 # Step 1. Load the images, verify that they are valid images (dimensions > 0 and 3 channels. Also dim(A) == dim(B))))
-img1_path = "../data/test.jpg"
-img2_path = "../data/test.jpg"
+project_path = os.getcwd()
+data_path = os.path.join(project_path, "data")
 
-img1 = load_image(img1_path)
-img2 = load_image(img2_path)
+dorde_path = os.path.join(data_path, "dorde.jpg")
+jørgen_path = os.path.join(data_path, "jørgen.jpg")
+
+
+dorde = load_image(dorde_path)
+jørgen = load_image(jørgen_path)
+
+img1 = dorde
+img2 = jørgen
 
 # Validate the images
 
@@ -38,6 +46,8 @@ for img in img_list:
 
 
 # Step 3. Interpolate the facial landmarks using IDW.
+
+
 
 # Step 4. Project the interpolated facial landmarks to the GAN.
 
