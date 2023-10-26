@@ -1,7 +1,7 @@
 """
 This file contains methods needed to interpolate 2 images using IDW on the facial landmarks.
 """
-from img_utils import *
+from backend.img_utils import *
 import numpy as np
 import copy
 
@@ -19,7 +19,7 @@ def get_delta(x: np.array, y: np.array) -> np.array:
     return y - x
 
 
-def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, alpha: int, q: float) -> list[Image]:
+def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, n: int, q: float) -> list[Image]:
     
     # Make sure the features map 1 to 1
     assert features1.shape == features2.shape
@@ -28,7 +28,7 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
     feature_delta = get_delta(features1, features2)
     
     # Create the steps for the interpolation
-    timesteps = np.linspace(0, 1, alpha)
+    timesteps = np.linspace(0, 1, n)
     
     print(f'Timesteps: {timesteps}')
     
@@ -386,9 +386,9 @@ def test_inverse_distance_interpolation():
     features1 = np.array([[0,0], [1,0], [0,1], [1,1]])
     features2 = np.array([[0,0], [1,0], [0,1], [1,1]])
     
-    alpha = 10
+    n = 10
     
-    interpolated_image = inverse_distance_interpolation(img1, img2, features1, features2, alpha, q=0.5)
+    interpolated_image = inverse_distance_interpolation(img1, img2, features1, features2, n, q=0.5)
     
     #plt.imshow(interpolated_image, cmap='gray')
     #plt.show()    
