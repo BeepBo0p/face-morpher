@@ -2,7 +2,7 @@
 This file contains the code for detecting the face features in an image.
     
 """
-from backend.img_utils import *
+from img_utils import *
 import numpy as np
 import dlib as dl
 import os
@@ -44,7 +44,7 @@ def detect_facial_features(img: Image) -> np.array:
             # Show the image with the facial features
             plt.imshow(gray.data, cmap="gray")
             for i in range(68):
-                print(f"landmark {i}: {landmarks.part(i)}")
+                #print(f"landmark {i}: {landmarks.part(i)}")
                 landmark = landmarks.part(i)
                 plt.plot(landmarks.part(i).x, landmarks.part(i).y, "ro")
             plt.show()
@@ -54,7 +54,7 @@ def detect_facial_features(img: Image) -> np.array:
             for i in range(68):
                 facial_features[i] = (landmarks.part(i).x, landmarks.part(i).y)
             
-            return facial_features
+            return facial_features.astype(int)
         else:
             print("No face detected")
     
