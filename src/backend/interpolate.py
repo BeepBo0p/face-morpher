@@ -19,8 +19,61 @@ def get_delta(x: np.array, y: np.array) -> np.array:
     return y - x
 
 
-def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, alpha: float):
+def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, alpha: int, q: float) -> list[Image]:
+    
+    # Make sure the features map 1 to 1
+    assert features1.shape == features2.shape
+    
+    # Get the delta vector between the 2 feature maps
+    feature_delta = get_delta(features1, features2)
+    
+    # Create the steps for the interpolation
+    timesteps = np.linspace(0, 1, alpha)
+    
+    print(f'Timesteps: {timesteps}')
+    
+    # List to store the interpolated images
+    slices = []
+    
+    for t in timesteps:
+        
+        # Compute the interpolated features for the current timestep
+        interpolated_features = features1 + t * feature_delta
+
+        # Define the delta field for the image
+        delta_field = np.zeros((img1.width, img1.height, 2))
+        
+        # TODO: Verify that this is the right approach, I don't think it is
+        # Insert each interpolated feature into the delta field at its original position
+        for i in range(features1.shape[0]):
+            
+            x, y = features1[i]
+            
+            delta_field[x][y] = interpolated_features[i]
+            
+            
+        # Interpolate the delta field using IDW
+        delta_field = inverse_distance_weighting(img1, img2, delta_field, q)
+        
+        # sample from both images and use the delta field to linearly interpolate between them
+        
+        interpolated_image = np.zeros((img1.width, img1.height))
+        
+        
+
+                
+                
+                
+        
+        
+                
+        
+    
+    
+def inverse_distance_weighting(img1: Image, img2: Image, delta_field: np.ndarray, q: float) -> np.ndarray:
     pass
+   
+    
 
 def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     """Bilinearly samples a value from the image at the given coordinates.
@@ -317,6 +370,31 @@ def coordinate_transform(x: float, y: float, width_src: int, height_src: int, wi
     
     pass
 
+
+def test_inverse_distance_interpolation():
+    
+    print("=========== Testing inverse distance interpolation ===========")
+    
+    img1 = Image(2,2,1)
+    img2 = Image(2,2,1)
+    
+    # Set the pixels
+    img1.data = np.array([[0,1], [2,3]])
+    img2.data = np.array([[4,5], [6,7]])
+    
+    # Set the features
+    features1 = np.array([[0,0], [1,0], [0,1], [1,1]])
+    features2 = np.array([[0,0], [1,0], [0,1], [1,1]])
+    
+    alpha = 10
+    
+    interpolated_image = inverse_distance_interpolation(img1, img2, features1, features2, alpha, q=0.5)
+    
+    #plt.imshow(interpolated_image, cmap='gray')
+    #plt.show()    
+    return
+
+
 def test_bilinear_sampling():
     
     print("=========== Testing bilinear sampling ===========")
@@ -350,7 +428,7 @@ def test_bilinear_sampling():
     
     print(f'Almost mean: {almost_mean}')
     
-    resolution = 1000
+    resolution = 500
 
     
     sampled_image = np.zeros((resolution+1, resolution+1))
@@ -371,4 +449,5 @@ def test_bilinear_sampling():
 # Test the different functions
 if __name__ == "__main__":
     
-    test_bilinear_sampling()
+    #test_bilinear_sampling()
+    test_inverse_distance_interpolation()
