@@ -136,6 +136,11 @@ def convert_to_grayscale(image: Image) -> Image:
     
     grayscale_image.data = np.dot(image.data[...,:3], [0.299, 0.587, 0.114])
     
+    # Reshape the image to w, h, 1
+    grayscale_image.data = np.reshape(grayscale_image.data, (image.width, image.height, 1))
+    
+    print(grayscale_image.data.shape)
+    
     return grayscale_image
 
 # Test the code
