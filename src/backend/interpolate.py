@@ -1,9 +1,11 @@
 """
 This file contains methods needed to interpolate 2 images using IDW on the facial landmarks.
 """
-from backend.img_utils import *
+from img_utils import *
 import numpy as np
 import copy
+import os
+import detect_face_features as dff
 
 def get_delta(x: np.array, y: np.array) -> np.array:
     """Computes the delta vector between the 2 given vectors.
@@ -24,51 +26,69 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
     # Make sure the features map 1 to 1
     assert features1.shape == features2.shape
     
-    # Get the delta vector between the 2 feature maps
-    feature_delta = get_delta(features1, features2)
+    # Get the positional delta vector between the 2 feature maps
+    feature_pos_delta = get_delta(features1, features2)
+    
+    # Get the colour values for each feature set
+    img1_colours = np.array([img1.data[x][y] for x, y in features1])
+    img2_colours = np.array([img2.data[x][y] for x, y in features2])
+    
+    # Get the colour delta vector between the 2 images
+    feature_col_delta = get_delta(img1_colours, img2_colours)
+    
     
     # Create the steps for the interpolation
-    timesteps = np.linspace(0, 1, n)
+    timesteps = np.linspace(0, 1, n+1)
     
     print(f'Timesteps: {timesteps}')
     
     # List to store the interpolated images
     slices = []
     
+    feature_list = [features1]
+    colour_list = [img1_colours]
+    
+    interpolated_image_list = []
+    interpolated_delta_field_list = []
+    
     for t in timesteps:
         
-        # Compute the interpolated features for the current timestep
-        interpolated_features = features1 + t * feature_delta
+        interpolated_image = np.zeros((img1.width, img1.height, 3))
+        interpolated_delta_field = np.zeros((img1.width, img1.height, 2))
+        
+        interpolated_pos_delta = feature_pos_delta * t
+        interpolated_col_delta = feature_col_delta * t
+        
+        interpolated_features = features1 + interpolated_pos_delta
+        interpolated_colours = img1_colours + interpolated_col_delta
+        
+        # Round features and colours to integers
+        interpolated_features = interpolated_features.astype(int)
+        interpolated_colours = interpolated_colours.astype(int)
+        
+        feature_list.append(interpolated_features)
+        colour_list.append(interpolated_colours)
+        
+        # Print the first 5 interpolated features
+        print(f'Interpolated features: {interpolated_features[:1]}', end=' | ')
+        print(f'Interpolated colours: {interpolated_colours[:1]}')
+        
+        for coord in interpolated_features:
+            
+            x, y = coord
+            
+            # Store the values in the interpolated image
+            interpolated_image[x][y] = interpolated_colours[0]
+            
+            # Store the delta values to use for sampling later
+            interpolated_delta_field[x][y] = interpolated_pos_delta[0]
+            
+        # Next steps:
+        # 1. Compute the rest of the delta field using IDW
+        # 2. Using the delta field, bilinearly sample from both images and linearly interpolate between them
+        # 3. Store the interpolated image in a list
+        
 
-        # Define the delta field for the image
-        delta_field = np.zeros((img1.width, img1.height, 2))
-        
-        # TODO: Verify that this is the right approach, I don't think it is
-        # Insert each interpolated feature into the delta field at its original position
-        for i in range(features1.shape[0]):
-            
-            x, y = features1[i]
-            
-            delta_field[x][y] = interpolated_features[i]
-            
-            
-        # Interpolate the delta field using IDW
-        delta_field = inverse_distance_weighting(img1, img2, delta_field, q)
-        
-        # sample from both images and use the delta field to linearly interpolate between them
-        
-        interpolated_image = np.zeros((img1.width, img1.height))
-        
-        
-
-                
-                
-                
-        
-        
-                
-        
-    
     
 def inverse_distance_weighting(img1: Image, img2: Image, delta_field: np.ndarray, q: float) -> np.ndarray:
     pass
@@ -375,16 +395,19 @@ def test_inverse_distance_interpolation():
     
     print("=========== Testing inverse distance interpolation ===========")
     
-    img1 = Image(2,2,1)
-    img2 = Image(2,2,1)
+    project_path = os.getcwd()
+    data_path = os.path.join(project_path, 'data')
     
-    # Set the pixels
-    img1.data = np.array([[0,1], [2,3]])
-    img2.data = np.array([[4,5], [6,7]])
+    dorde_path = os.path.join(data_path, 'dorde.jpg')
+    jørgen_path = os.path.join(data_path, 'jørgen.jpg')
     
-    # Set the features
-    features1 = np.array([[0,0], [1,0], [0,1], [1,1]])
-    features2 = np.array([[0,0], [1,0], [0,1], [1,1]])
+    img1 = load_image(dorde_path)
+    img2 = load_image(jørgen_path)
+    
+    features1 = dff.detect_facial_features(img1)
+    features2 = dff.detect_facial_features(img2)
+    
+    
     
     n = 10
     
