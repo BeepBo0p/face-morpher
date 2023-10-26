@@ -92,16 +92,18 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
         print(f'Interpolated features: {interpolated_features[:1]}', end=' | ')
         print(f'Interpolated colours: {interpolated_colours[:1]}')
         
-        for coord in interpolated_features:
+        for i in range(interpolated_features.shape[0]):
+            
+            coord = interpolated_features[i]
             
             x, y = coord
             
             # Store the values in the interpolated image
-            interpolated_image[x][y] = interpolated_colours[0]
+            interpolated_image[x][y] = interpolated_colours[i]
             
             # Store the delta values to use for sampling later
-            interpolated_delta_field[x][y] = interpolated_pos_delta[0]
-            
+            interpolated_delta_field[x][y] = -1 * interpolated_pos_delta[i]
+            #TODO: Carefully check the sign of the delta field.            
             #TODO: Verify that we can use the same delta field for both images.
             
         # Next steps:
