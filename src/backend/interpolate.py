@@ -168,7 +168,30 @@ def inverse_distance_weighting(point: np.array, interpolants: np.ndarray, interp
         np.ndarray: Interpolate value at the given point.
     """
     
-    pass
+    # First we handle the trivial case where the point is one of the interpolants
+    for i in range(interpolants.shape[0]):
+        if(np.array_equal(point, interpolants[i])):
+            return interpolants_value[i]
+        
+    # Otherwise, actual interpolation must be done
+    
+    # Start by computing the distance between the point and each of the interpolants
+    l2_distances = np.zeros((interpolants.shape[0]))
+    
+    for i in range(interpolants.shape[0]):
+        l2_distances[i] = np.linalg.norm(point - interpolants[i])
+        
+    # Weights are the inverse of the distances raised to the power of q
+    weights = 1 / (l2_distances ** q)
+    
+    # Normalise the weights
+    weights = weights / np.sum(weights)
+    
+    # Obtain the weighted values through pairwise multiplication
+    weighted_values = interpolants_value * weights
+    
+    # Return the sum of the weighted values as the interpolated value
+    return np.sum(weighted_values)
    
     
 
