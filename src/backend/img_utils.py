@@ -110,6 +110,21 @@ def save_image(image: Image, path: str) -> None:
         image: The image to save.
         path: The path to save the image to.
     """
+    
+    # Check if output path is valid
+    if(path == ""):
+        raise ValueError("Output path is empty.")
+    
+    # Check if the image is valid
+    if(not is_valid_image(image)):
+        raise ValueError("Image is invalid.")
+    
+    # Check if the image is in RGB format
+    if(not is_valid_image(image, rgb=True)):
+        raise ValueError("Image is not in RGB format.")
+    
+    #TODO: Create the output directory if it does not exist
+    
     plt.imsave(path, image.data)
     
 def show_image(image: Image) -> None:

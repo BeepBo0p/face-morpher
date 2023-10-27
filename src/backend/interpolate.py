@@ -188,10 +188,15 @@ def inverse_distance_weighting(point: np.array, interpolants: np.ndarray, interp
     weights = weights / np.sum(weights)
     
     # Obtain the weighted values through pairwise multiplication
-    weighted_values = interpolants_value * weights
+    weighted_values = [weights[i] * interpolants_value[i] for i in range(interpolants.shape[0])]
+    
+    interpoled_value = interpolants_value[0].astype(float) * 0
+    
+    for i in range(interpolants.shape[0]):
+        interpoled_value += weighted_values[i]
     
     # Return the sum of the weighted values as the interpolated value
-    return np.sum(weighted_values)
+    return interpoled_value
    
     
 
@@ -517,6 +522,74 @@ def test_inverse_distance_interpolation():
     #plt.show()    
     return
 
+def test_inverse_distance_weighting():
+        
+    print("=========== Testing inverse distance weighting ===========")
+    
+    # Test case 1
+    point = np.array([0,0])
+    interpolants = np.array([[0,0], [2,0], [0,2], [2,2]])
+    interpolants_value = np.array([0, 1, 2, 3])
+    q = 2
+    
+    #print(f'Interpolated value at {point}: {inverse_distance_weighting(point, interpolants, interpolants_value, q)}')
+    
+    # Test case 2
+    point = np.array([1,1])
+    interpolants = np.array([[0,0], [2,0], [0,2], [2,2]])
+    interpolants_value = np.array([0, 1, 2, 3])
+    q = 2
+    
+    #print(f'Interpolated value at {point}: {inverse_distance_weighting(point, interpolants, interpolants_value, q)}')
+    
+    # Test case 3
+    point = np.array([0.5,0.5])
+    interpolants = np.array([[0,0], [2,0], [0,2], [2,2]])
+    interpolants_value = np.array([0, 1, 2, 3])
+    q = 2
+    
+    #print(f'Interpolated value at {point}: {inverse_distance_weighting(point, interpolants, interpolants_value, q)}')
+    
+    # Image test case
+    project_path = os.getcwd()
+    output_path = os.path.join(project_path, 'output')
+    
+    dim = 1000
+    dim1 = dim
+    dim2 = dim
+    
+    img = Image(dim1, dim2, 3)
+    
+    # Create random set of points and values within the image
+    interpolants_x = np.random.randint(0, dim1, (10, 1))
+    interpolants_y = np.random.randint(0, dim2, (10, 1))
+    
+    interpolants = np.concatenate((interpolants_x, interpolants_y), axis=1)
+    interpolants_value = np.random.randint(0, 255, (10, 3))
+    
+    # Set the pixels
+    for i in range(interpolants.shape[0]):
+        x, y = interpolants[i]
+        img.data[x][y] = interpolants_value[i]
+        
+    # Save the image
+    save_image(img, os.path.join(output_path, 'idw-test.png'))
+    
+    # Interpolate the rest of the image
+    for x in range(img.width):
+        for y in range(img.height):
+            
+            # Skip the pixels that are already interpolated
+            if(img.data[x][y].any()):
+                continue
+            
+            # Get the interpolated value
+            img.data[x][y] = inverse_distance_weighting(np.array([x,y]), interpolants, interpolants_value, 2)
+            
+    # Save the image
+    save_image(img, os.path.join(output_path, 'idw-test-interpolated.png'))
+
+
 
 def test_bilinear_sampling():
     
@@ -573,4 +646,5 @@ def test_bilinear_sampling():
 if __name__ == "__main__":
     
     #test_bilinear_sampling()
-    test_inverse_distance_interpolation()
+    #test_inverse_distance_interpolation()
+    test_inverse_distance_weighting()
