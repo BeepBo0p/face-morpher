@@ -6,7 +6,10 @@ import numpy as np
 import copy
 import os
 import detect_face_features as dff
+from numba import njit, jit
+import cv2 as cv
 
+@njit
 def get_delta(x: np.array, y: np.array) -> np.array:
     """Computes the delta vector between the 2 given vectors.
     The delta vector is the difference between the 2 vectors.
@@ -57,7 +60,7 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
     
     
     # Create the steps for the interpolation
-    timesteps = np.linspace(0, 1, n+1)
+    timesteps = np.linspace(0, 0.9, n)
     
     print(f'Timesteps: {timesteps}')
     
@@ -73,9 +76,16 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
     for t in timesteps:
         
         interpolated_image = np.zeros((img1.width, img1.height, 3))
-        interpolated_delta_field = np.zeros((img1.width, img1.height, 2))
         
+        # The delta field tracks how far the pixels have moved from the first image to the second image and from the second image to the first image
+        interpolated_delta_field = np.zeros((img1.width, img1.height, 4))
+        
+        # Compute the interpolated feautres from image 1 in positive t-direction
         interpolated_pos_delta = feature_pos_delta * t
+        
+        # Compute the interpolated features from image 2 in negative t-direction
+        reverse_interpolated_pos_delta = feature_pos_delta * (1 - t)
+        
         interpolated_col_delta = feature_col_delta * t
         
         interpolated_features = features1 + interpolated_pos_delta
@@ -90,7 +100,11 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
         
         # Print the first 5 interpolated features
         print(f'Interpolated features: {interpolated_features[:1]}', end=' | ')
-        print(f'Interpolated colours: {interpolated_colours[:1]}')
+        print(f'Interpolated colours: {interpolated_colours[:1]}', end=' | ')
+        
+        # Store the deltas in positive and negative t-direction together
+        interpolated_pos_delta = np.concatenate((-1 * interpolated_pos_delta, reverse_interpolated_pos_delta), axis=1)
+        print(f'Interpolated delta: {interpolated_pos_delta[:1]}')
         
         for i in range(interpolated_features.shape[0]):
             
@@ -102,12 +116,14 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
             interpolated_image[x][y] = interpolated_colours[i]
             
             # Store the delta values to use for sampling later
-            interpolated_delta_field[x][y] = -1 * interpolated_pos_delta[i]
+            interpolated_delta_field[x][y] = interpolated_pos_delta[i]
             #TODO: Carefully check the sign of the delta field.            
             #TODO: Verify that we can use the same delta field for both images.
             
         # Next steps:
         # 1. Compute the rest of the delta field using IDW
+        
+        #print(f"Computing delta field for t={t}:", end=' ')
         
         for x in range(img1.width):
             for y in range(img1.height):
@@ -117,7 +133,10 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
                     continue
                                 
                 # Compute the delta field
-                interpolated_delta_field[x][y] = inverse_distance_weighting(np.array([x,y]), interpolated_features, interpolated_pos_delta, q)
+                interpolated_delta_field[x][y] = inverse_distance_weighting(np.array([x,y], dtype=float), interpolated_features.astype(float), interpolated_pos_delta, q)
+                #print('|', end=' ')
+        
+        print(f"Delta field computed for t={t}")
         
         # 2. Using the delta field, bilinearly sample from both images and linearly interpolate between them
         
@@ -132,16 +151,18 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
                 delta = interpolated_delta_field[x][y]
                 
                 # Sample from the 2 images
-                img1_sample = bilinear_sampling(img1, x + delta[0], y + delta[1])
+                img1_sample = bilinear_sampling(img1.data.astype(float), float(x) + delta[0], float(y) + delta[1])
                 
                 #TODO: Verify that we can use the same delta field for both images
-                img2_sample = bilinear_sampling(img2, x - delta[0], y - delta[1])
+                img2_sample = bilinear_sampling(img2.data.astype(float), float(x) + delta[-2], float(y) + delta[-1])
                 
                 # weights are the time distance from the first to second image
                 
                 
                 # Compute the bilinear sampling
                 interpolated_image[x][y] = img1_sample * (1 - t) + img2_sample * t
+        
+        print(f"Interpolated image computed for t={t}")
         
         # 3. Store the interpolated image in a list
         
@@ -153,7 +174,7 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
     return interpolated_image_list
         
 
-    
+@njit#(parallel=True, fastmath=True, cache=True)
 def inverse_distance_weighting(point: np.array, interpolants: np.ndarray, interpolants_value: np.ndarray, q: float) -> np.ndarray:
     """Given a point and a set of interpolants (and their associated value) and a q value, 
     computes the interpolated value at the given point. Increasing q will increase the influence of the closest points.
@@ -190,19 +211,19 @@ def inverse_distance_weighting(point: np.array, interpolants: np.ndarray, interp
     # Obtain the weighted values through pairwise multiplication
     weighted_values = [weights[i] * interpolants_value[i] for i in range(interpolants.shape[0])]
     
-    interpoled_value = interpolants_value[0].astype(float) * 0
+    interpolated_value = interpolants_value[0] * 0
     
     for i in range(interpolants.shape[0]):
-        interpoled_value += weighted_values[i]
+        interpolated_value += weighted_values[i]
     
     # Return the sum of the weighted values as the interpolated value
-    return interpoled_value
+    return interpolated_value
    
     
-
-def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
+@njit#(parallel=True, fastmath=True, cache=True)
+def bilinear_sampling(img: np.ndarray, x: float, y: float) -> np.ndarray:
     """Bilinearly samples a value from the image at the given coordinates.
-    Assumes [0,0] is the top left corner of the image and img.width, img.height is the bottom right corner of the image.
+    Assumes [0,0] is the top left corner of the image and width, height is the bottom right corner of the image.
     Padding is done by repeating the edge pixels and interpolation out of bounds is projected onto the edge.
     
     coordinate example with 1x1 image:
@@ -230,27 +251,27 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     
     # First we deep copy the image and pad it. This should allow us to handle the edge cases more easily.
     # NOTE: When actually sampling we must add 1 to the coordinates to account for the padding.
-    img_padded = copy.deepcopy(img.data)
-    img_padded = np.pad(img_padded, 1, mode='edge')
+    img_padded = img
+    width, height = img.shape[0], img.shape[1]
     
     
     # If the coordinates are out of bounds, project them onto the nearest edge
     if(x < 0):
         x = 0
-    elif(x > img.width):
-        x = img.width - 1
+    elif(x > width):
+        x = width
         
     if(y < 0):
         y = 0
-    elif(y > img.height):
-        y = img.height - 1
+    elif(y > height):
+        y = height
         
     # Now we must find the 4 nearest pixels to the given coordinates
 
     top_edge = round(y - 0.00001) == 0
-    bottom_edge = round(y + 0.00001) == img.height
+    bottom_edge = round(y + 0.00001) == height
     left_edge = round(x - 0.00001) == 0
-    right_edge = round(x + 0.00001) == img.width
+    right_edge = round(x + 0.00001) == width
     
     top_left = top_edge and left_edge
     top_right = top_edge and right_edge
@@ -259,30 +280,30 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     
     if(top_left):
         #print("Top left corner")
-        return img_padded[1][1]
+        return img_padded[0][0]
     
     if(top_right):
         #print("Top right corner")
-        return img_padded[-2][1]
+        return img_padded[-1][0]
     
     if(bottom_left):
         #print("Bottom left corner")
-        return img_padded[1][-2]
+        return img_padded[0][-1]
     
     if(bottom_right):
         #print("Bottom right corner")
-        return img_padded[-2][-2]
+        return img_padded[-1][-1]
     
     # If we reach this point, we know that the coordinates are not on the corners of the image
     
     if(top_edge):
         #print("Top edge")
-        y = 1
+        y = 0
         x_s = x - 0.5
-        x_s += 1 # add 1 to account for padding
+        #x_s += 1 # add 1 to account for padding
         
-        left_x = np.floor(x_s).astype(int)
-        right_x = np.ceil(x_s).astype(int)
+        left_x = int(np.floor(x_s))
+        right_x = int(np.ceil(x_s))
         
         left_pixel = img_padded[left_x][y]
         right_pixel = img_padded[right_x][y]
@@ -302,12 +323,12 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     
     if(bottom_edge):
         #print("Bottom edge")
-        y = -2
+        y = -1
         x_s = x - 0.5
-        x_s += 1 # add 1 to account for padding
+        #x_s += 1 # add 1 to account for padding
         
-        left_x = np.floor(x_s).astype(int)
-        right_x = np.ceil(x_s).astype(int)
+        left_x = int(np.floor(x_s))
+        right_x = int(np.ceil(x_s))
         
         left_pixel = img_padded[left_x][y]
         right_pixel = img_padded[right_x][y]
@@ -327,12 +348,12 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     
     if(left_edge):
         #print("Left edge")
-        x = 1
+        x = 0
         y_s = y - 0.5
-        y_s += 1 # add 1 to account for padding
+        #y_s += 1 # add 1 to account for padding
         
-        top_y = np.floor(y_s).astype(int)
-        bottom_y = np.ceil(y_s).astype(int)
+        top_y = int(np.floor(y_s))
+        bottom_y = int(np.ceil(y_s))
 
         
         top_pixel = img_padded[x][top_y]
@@ -353,12 +374,12 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     
     if(right_edge):
         #print("Right edge")
-        x = -2
+        x = -1
         y_s = y - 0.5
-        y_s += 1 # add 1 to account for padding
+        #y_s += 1 # add 1 to account for padding
         
-        top_y = np.floor(y_s).astype(int)
-        bottom_y = np.ceil(y_s).astype(int)
+        top_y = int(np.floor(y_s))
+        bottom_y = int(np.ceil(y_s))
         
         top_pixel = img_padded[x][top_y]
         bottom_pixel = img_padded[x][bottom_y]
@@ -385,24 +406,27 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     y_t = y - 0.5
     
     # We padded the image so we must add 1 to the coordinates
-    x_t += 1
-    y_t += 1
+    #x_t += 1
+    #y_t += 1
+    
+    left_x = int(np.floor(x_t))
+    right_x = int(np.ceil(x_t))
+    top_y = int(np.floor(y_t))
+    bottom_y = int(np.ceil(y_t))
     
     sample = np.array([x_t, y_t])
     
-    top_left_px = np.array([np.floor(x_t), np.floor(y_t)])
-    top_right_px = np.array([np.ceil(x_t), np.floor(y_t)])
-    bottom_left_px = np.array([np.floor(x_t), np.ceil(y_t)])
-    bottom_right_px = np.array([np.ceil(x_t), np.ceil(y_t)])
+    top_left_px = np.array([left_x, top_y])
+    top_right_px = np.array([right_x, top_y])
+    bottom_left_px = np.array([left_x, bottom_y])
+    bottom_right_px = np.array([right_x, bottom_y])
     
-    nearest_pixels = np.array([top_left_px, top_right_px, bottom_left_px, bottom_right_px])
+    nearest_pixels = [top_left_px, top_right_px, bottom_left_px, bottom_right_px]
     
     #for pixel in nearest_pixels:
     #    print(f'Nearest pixel: {pixel}', end=' | ')
     #print("")
     
-    # Cast the coordinates to integers
-    nearest_pixels = nearest_pixels.astype(int)
     
     # Now we must find the distance from the given coordinates to each of the nearest pixels
     distances = np.zeros((4))
@@ -418,9 +442,10 @@ def bilinear_sampling(img: Image, x: float, y: float) -> np.ndarray:
     for pixel in nearest_pixels:
         
         i, j = pixel[0], pixel[1]
+        
+        value = img_padded[i][j]
                 
-        # Since the image is padded we must add 1 to the coordinates
-        nearest_values.append(img_padded[i][j])
+        nearest_values.append(value)
                
     # we then normalise the distances
     distances = distances / np.sum(distances)
@@ -502,12 +527,33 @@ def test_inverse_distance_interpolation():
     
     project_path = os.getcwd()
     data_path = os.path.join(project_path, 'data')
+    output_path = os.path.join(project_path, 'output/interpolation')
     
     dorde_path = os.path.join(data_path, 'dorde.jpg')
     jørgen_path = os.path.join(data_path, 'jørgen.jpg')
     
     img1 = load_image(dorde_path)
     img2 = load_image(jørgen_path)
+    
+    # Resize the images to 200x250
+    img1.data = cv.resize(img1.data, (100, 125))
+    img2.data = cv.resize(img2.data, (100, 125))
+    
+    #plt.imshow(img1.data)
+    #plt.show()
+    
+    #plt.imshow(img2.data)
+    #plt.show()
+    
+    print(f'Image 1 shape: {img1.data.shape}')
+    print(f'Image 2 shape: {img2.data.shape}')
+    
+    img1.width, img1.height = img1.data.shape[0], img1.data.shape[1]
+    img2.width, img2.height = img2.data.shape[0], img2.data.shape[1]
+    
+    print(f'Image 1 width: {img1.width}, height: {img1.height}')
+    print(f'Image 2 width: {img2.width}, height: {img2.height}')
+    
     
     features1 = dff.detect_facial_features(img1)
     features2 = dff.detect_facial_features(img2)
@@ -518,8 +564,8 @@ def test_inverse_distance_interpolation():
     
     interpolated_image = inverse_distance_interpolation(img1, img2, features1, features2, n, q=0.5)
     
-    #plt.imshow(interpolated_image, cmap='gray')
-    #plt.show()    
+    for i in range(len(interpolated_image)):
+        save_image(interpolated_image[i], os.path.join(output_path, f'interpolated_image_{i}.png'))
     return
 
 def test_inverse_distance_weighting():
@@ -584,12 +630,10 @@ def test_inverse_distance_weighting():
                 continue
             
             # Get the interpolated value
-            img.data[x][y] = inverse_distance_weighting(np.array([x,y]), interpolants, interpolants_value, 2)
+            img.data[x][y] = inverse_distance_weighting(np.array([x,y], dtype=float), interpolants.astype(float), interpolants_value.astype(float), 2)
             
     # Save the image
     save_image(img, os.path.join(output_path, 'idw-test-interpolated.png'))
-
-
 
 def test_bilinear_sampling():
     
@@ -607,24 +651,24 @@ def test_bilinear_sampling():
     pixel_centers = np.array([[0.5, 0.5], [1.5, 0.5], [0.5, 1.5], [1.5, 1.5]])
     
     for i in outer_corners:
-        print(f'Sampled value at {i[0]}, {i[1]}: {bilinear_sampling(sample_image, i[0], i[1])}')
+        print(f'Sampled value at {i[0]}, {i[1]}: {bilinear_sampling(sample_image.data, i[0], i[1])}')
         print('\n')
         
     for i in pixel_centers:
-            print(f'Sampled value at {i[0]}, {i[1]}: {bilinear_sampling(sample_image, i[0], i[1])}')
+            print(f'Sampled value at {i[0]}, {i[1]}: {bilinear_sampling(sample_image.data, i[0], i[1])}')
                     
     
     mean = np.mean(sample_image.data)
     
-    mean_sample = bilinear_sampling(sample_image, 1, 1)
+    mean_sample = bilinear_sampling(sample_image.data, 1, 1)
     
     print(f'Mean: {mean}, Mean sample: {mean_sample}')
     
-    almost_mean = bilinear_sampling(sample_image, 1.1, 1)
+    almost_mean = bilinear_sampling(sample_image.data, 1.1, 1)
     
     print(f'Almost mean: {almost_mean}')
     
-    resolution = 500
+    resolution = 200
 
     
     sampled_image = np.zeros((resolution+1, resolution+1))
@@ -636,7 +680,7 @@ def test_bilinear_sampling():
             w_t = w / resolution * 2
             
             #print(f'Sampling at {w_t}, {h_t}')
-            sampled_image[w][h] = bilinear_sampling(sample_image, w_t, h_t)        
+            sampled_image[w][h] = bilinear_sampling(sample_image.data, w_t, h_t)        
         
         
     plt.imshow(sampled_image, cmap='gray')
@@ -645,6 +689,6 @@ def test_bilinear_sampling():
 # Test the different functions
 if __name__ == "__main__":
     
-    #test_bilinear_sampling()
-    #test_inverse_distance_interpolation()
+    test_bilinear_sampling()
     test_inverse_distance_weighting()
+    test_inverse_distance_interpolation()
