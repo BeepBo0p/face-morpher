@@ -1,3 +1,9 @@
+"""
+Made a cool error when implementing the inverse distance weighting.
+By interpolating colour values, but returning a single value using np.sum (which sums over the rgb-channels), I got a grayscale image.
+The grayscale value did not give the right interpolation, but it made a really cool effect.
+"""
+
 from img_utils import *
 import numpy as np
 import copy
@@ -41,11 +47,13 @@ def inverse_distance_weighting(point: np.array, interpolants: np.ndarray, interp
     # Obtain the weighted values through pairwise multiplication
     weighted_values = [weights[i] * interpolants_value[i] for i in range(interpolants.shape[0])]
     
-    interpoled_value = np.sum(weighted_values)
+        
+    interpolated_value = np.sum(weighted_values)
     
     
+        
     # Return the sum of the weighted values as the interpolated value
-    return interpoled_value
+    return interpolated_value
 
 
 def test_inverse_distance_weighting():
@@ -80,13 +88,13 @@ def test_inverse_distance_weighting():
     project_path = os.getcwd()
     output_path = os.path.join(project_path, 'output')
     
-    dim = 500
+    dim = 1000
     dim1 = dim
     dim2 = dim
     
     img = Image(dim1, dim2, 3)
     
-    num_interpolants = 20
+    num_interpolants = 100
     
     # Create random set of points and values within the image
     interpolants_x = np.random.randint(0, dim1, (num_interpolants, 1))
@@ -118,14 +126,24 @@ def test_inverse_distance_weighting():
             value = np.array([value] * 3)
             
             # Scale according to rgb-channel
-            value = value * np.array([0.3, 0.1, 0.8])
+            R = 1
+            G = 1
+            B = 1
+            
+            value = value * np.array([R, G, B])
             
             img.data[x][y] = value
             
     # Filter the original interpolants
     for i in range(interpolants.shape[0]):
         x, y = interpolants[i]
-        img.data[x][y] = img.data[x-1][y]*0.25 + img.data[x+1][y]*0.25 + img.data[x][y-1]*0.25 + img.data[x][y+1]*0.25
+        
+        # Randomly set them as black or white
+        if(np.random.randint(0,2)):
+            img.data[x][y] = np.array([0,0,0])
+        else:
+            img.data[x][y] = np.array([255,255,255])
+
         
         
     # Normalize the image
