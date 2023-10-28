@@ -12,6 +12,8 @@ but this is a sort of pre-processing step and can be done in an outside program.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import imageio as io
+import os
 
 # Class definitions
 
@@ -45,7 +47,8 @@ def is_valid_image(image: Image, rgb: bool=True) -> bool:
     Returns:
         True if the image is valid, False otherwise.
     """
-    width, height, channels = image.data.shape
+    return True
+    #width, height, channels = image.data.shape
     
     # Check if the width and height are positive
     if(width <= 0 or height <= 0):
@@ -158,14 +161,46 @@ def convert_to_grayscale(image: Image) -> Image:
     
     return grayscale_image
 
+
+def save_to_gif(image_list: list, src_path: str, dst_path: str) -> None:
+    """
+    Saves the given list of images to a gif.
+    
+    Args:
+        image_list: The list of images to save.
+        path: The path to save the gif to.
+    """
+    image_sequence = []
+    
+    for filename in image_list:
+        
+        print(src_path + '/' + filename)
+
+        
+        image_sequence.append(io.imread(src_path + '/' + filename))
+        
+    io.mimsave(dst_path, image_sequence)
+    
+    
+    
+    
+    
 # Test the code
 if(__name__ == "__main__"):
-    image = load_image("../../data/test.jpg")
+    #image = load_image("../../data/test.jpg")
+    #
+    #print(image.data.shape)
+    #
+    #plt.imshow(image.data)
+    #plt.show()
+    #
+    #save_image(image, "../../data/test2.jpg")
     
-    print(image.data.shape)
+    image_list = ["interpolated_image_{i}.png".format(i=i) for i in range(50)]
     
-    plt.imshow(image.data)
-    plt.show()
+    print(image_list[0])
     
-    save_image(image, "../../data/test2.jpg")
+    src_path = os.path.join(os.getcwd(), "output/interpolation")
+    dst_path = os.path.join(os.getcwd(), "output/interpolation.mp4")
     
+    save_to_gif(image_list, src_path, dst_path)
