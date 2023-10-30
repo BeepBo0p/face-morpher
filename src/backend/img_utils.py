@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import imageio as io
 import os
 
+
 # Class definitions
 
 class Image:
@@ -95,11 +96,11 @@ def load_image(path: str) -> Image:
     Returns:
         An Image object.
     """
-    image = plt.imread(path)
+    image = io.imread(path)
     
-    width, height, _ = image.shape
+    width, height, channels = image.shape
     
-    image_object = Image(width, height)
+    image_object = Image(width, height, channels)
     
     image_object.data = image
     
@@ -196,11 +197,12 @@ if(__name__ == "__main__"):
     #
     #save_image(image, "../../data/test2.jpg")
     
-    image_list = ["interpolated_image_{i}.png".format(i=i) for i in range(50)]
-    
+    image_list = ["interpolated_image_{i}.png".format(i=i) for i in range(10)]
+    #image_list = ["interpolated_image__with_features_{i}.png".format(i=i) for i in range(10)]
+
     print(image_list[0])
     
     src_path = os.path.join(os.getcwd(), "output/interpolation")
-    dst_path = os.path.join(os.getcwd(), "output/interpolation.mp4")
+    dst_path = os.path.join(os.getcwd(), "output/interpolation_with_feat.mp4")
     
     save_to_gif(image_list, src_path, dst_path)

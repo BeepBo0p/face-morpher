@@ -181,6 +181,15 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
         
         #interpolated_image_list.append(interpolated_image)
         
+        # Clear the figure
+        #plt.clf()
+        
+        # Plot delta field as a heatmap
+        #plt.imshow(interpolated_delta_field[:,:,0], cmap='hot', interpolation='nearest')
+        
+        # Save plot to file in high resolution
+        #plt.savefig(os.path.join(os.getcwd(), f'output/interpolation/delta_field_{int(image_nr)}.png'), dpi=300)
+        
         # Save the image to file
         plt.imsave(os.path.join(os.getcwd(), f'output/interpolation/interpolated_image_{int(image_nr)}.png'), interpolated_image)
         
@@ -550,20 +559,27 @@ def test_inverse_distance_interpolation():
     data_path = os.path.join(project_path, 'data')
     output_path = os.path.join(project_path, 'output/interpolation')
     
-    dorde_path = os.path.join(data_path, 'dorde.jpg')
-    jørgen_path = os.path.join(data_path, 'jørgen.jpg')
+    dorde_path = os.path.join(data_path, 'dc.jpg')
+    jørgen_path = os.path.join(data_path, 'jc.jpg')
     
     img1 = load_image(dorde_path)
     img2 = load_image(jørgen_path)
+        
+    # Resize the images to 256x256
+    img1.data = cv.resize(img1.data, (256, 256))
+    img2.data = cv.resize(img2.data, (256, 256))
+    
+    # Convert to standard RGB
+    #img1.data = cv.cvtColor(img1.data, cv.COLOR_BGR2RGB)
+    #img2.data = cv.cvtColor(img2.data, cv.COLOR_BGR2RGB)
     
     # Resize the images to 200x250
-    img1.data = cv.resize(img1.data, (200, 250))
-    img2.data = cv.resize(img2.data, (200, 250))
+    #img1.data = cv.resize(img1.data, (200, 250))
+    #img2.data = cv.resize(img2.data, (200, 250))
     
-    # Convert the images to grayscale
-    #img1.data = cv.cvtColor(img1.data, cv.COLOR_BGR2GRAY)
-    #img2.data = cv.cvtColor(img2.data, cv.COLOR_BGR2GRAY)
-    
+    # Resize the images to 100x125
+    #img1.data = cv.resize(img1.data, (100, 125))
+    #img2.data = cv.resize(img2.data, (100, 125))
     #plt.imshow(img1.data)
     #plt.show()
     
@@ -585,9 +601,9 @@ def test_inverse_distance_interpolation():
     
     
     
-    n = 50
+    n = 40
     
-    interpolated_image = inverse_distance_interpolation(img1, img2, features1, features2, n, q=16)
+    interpolated_image = inverse_distance_interpolation(img1, img2, features1, features2, n, q=4)
     
     #for i in range(len(interpolated_image)):
         
@@ -660,7 +676,7 @@ def test_inverse_distance_weighting():
                 continue
             
             # Get the interpolated value
-            img.data[x][y] = inverse_distance_weighting(np.array([x,y], dtype=float), interpolants.astype(float), interpolants_value.astype(float), 8)
+            img.data[x][y] = inverse_distance_weighting(np.array([x,y], dtype=float), interpolants.astype(float), interpolants_value.astype(float), 4)
             
     # Save the image
     save_image(img, os.path.join(output_path, 'idw-test-interpolated.png'))
@@ -719,5 +735,5 @@ def test_bilinear_sampling():
 if __name__ == "__main__":
     
     #test_bilinear_sampling()
-    #test_inverse_distance_weighting()
+    test_inverse_distance_weighting()
     test_inverse_distance_interpolation()
