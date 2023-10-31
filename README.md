@@ -35,3 +35,8 @@ Use this workspace to solve your assignments and projects during the course CS43
 
 A direct interpolation of colours will lead to a suboptimal quality.
 The colours should instead be interpolated indirectly.
+
+
+# Setup
+
+wget https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/ffhq.pkl
