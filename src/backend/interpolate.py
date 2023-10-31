@@ -24,7 +24,7 @@ def get_delta(x: np.array, y: np.array) -> np.array:
     return y - x
 
 
-def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, n: int, q: float) -> list[Image]:
+def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, n: int, q: float, out_dir: str) -> tuple(str, list[str]):
     """Creates a sequence of interpolated images using facial features as guide.
     Features are interpolated are linearly interpolated between the 2 images along with the colour values at each time step t (out of n+1 steps).
     Each shifted feature is then used to compute a delta field using IDW to describe the shift of all other pixels in the image.
@@ -47,6 +47,7 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
     
     # Make sure the features map 1 to 1
     assert features1.shape == features2.shape
+    
     
     # Normalise both images
     max_val = np.max(img1.data)
@@ -85,6 +86,7 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
     interpolated_delta_field_list = []
     
     image_nr = 0
+    image_path_list = []
     
     for t in timesteps:
         
@@ -192,16 +194,18 @@ def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarr
         
         # Save the image to file
         plt.imsave(os.path.join(os.getcwd(), f'output/interpolation/interpolated_image_{int(image_nr)}.png'), interpolated_image)
+        image_path_list.append(f'interpolated_image_{int(image_nr)}.png')
         
         image_nr += 1
         
         
         
     # Append the second image to the list
-    interpolated_image_list.append(img2.data)
+    #interpolated_image_list.append(img2.data)
     plt.imsave(os.path.join(os.getcwd(), f'output/interpolation/interpolated_image_{n}.png'), img2.data)
+    image_path_list.append(f'interpolated_image_{n}.png')
     
-    return interpolated_image_list
+    return (os.path.join(os.getcwd(), out_dir), image_path_list)
         
 
 @njit#(parallel=True, fastmath=True, cache=True)
@@ -566,8 +570,8 @@ def test_inverse_distance_interpolation():
     img2 = load_image(jørgen_path)
         
     # Resize the images to 256x256
-    img1.data = cv.resize(img1.data, (256, 256))
-    img2.data = cv.resize(img2.data, (256, 256))
+    #img1.data = cv.resize(img1.data, (256, 256))
+    #img2.data = cv.resize(img2.data, (256, 256))
     
     # Convert to standard RGB
     #img1.data = cv.cvtColor(img1.data, cv.COLOR_BGR2RGB)
@@ -735,5 +739,5 @@ def test_bilinear_sampling():
 if __name__ == "__main__":
     
     #test_bilinear_sampling()
-    test_inverse_distance_weighting()
+    #test_inverse_distance_weighting()
     test_inverse_distance_interpolation()
