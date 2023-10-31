@@ -20,7 +20,7 @@ The procedure will do the following:
 Luckily, NVIDIA has already made this for us (seemingly based on the image2stylegan paper), so we just call their code.
 
 """
-import backend.projector as projector
+import projector as projector
 import os
 
 def project_to_gan(src_path: str='output/interpolation', 
@@ -28,7 +28,8 @@ def project_to_gan(src_path: str='output/interpolation',
                    save_video: bool=False, 
                    seed: int=303, 
                    num_steps: int=500, 
-                   output_name: str='interpolated_image.png'):
+                   output_name: str='projection.png'
+                   ):
 
     src_path = os.path.abspath('output/interpolation')
     
@@ -44,11 +45,11 @@ def project_to_gan(src_path: str='output/interpolation',
         projector.run_projection(
             network_pkl='https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/ffhq.pkl',
             target_fname=os.path.join(src_path, image),
-            outdir ='output/projection',
+            outdir = outdir,
             save_video=False,
             seed=303,
-            num_steps=500,
-            output_name=image
+            num_steps=num_steps,
+            output_name=output_name
         )
     
 if __name__ == '__main__':

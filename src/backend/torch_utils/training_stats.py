@@ -14,7 +14,7 @@ code."""
 import re
 import numpy as np
 import torch
-import dnnlib
+import dnnlib as dnnlib
 
 from . import misc
 

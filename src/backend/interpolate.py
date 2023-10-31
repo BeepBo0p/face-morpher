@@ -5,7 +5,7 @@ This file contains methods needed to interpolate 2 images using IDW on the facia
 import numpy as np
 import copy
 import os
-import backend.detect_face_features as dff
+import detect_face_features as dff
 from numba import njit, jit
 import cv2 as cv
 import matplotlib.pyplot as plt
@@ -196,8 +196,13 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
         #plt.savefig(os.path.join(os.getcwd(), f'output/interpolation/delta_field_{int(image_nr)}.png'), dpi=300)
         
         # Save the image to file
-        cv.imwrite(os.path.join(os.getcwd(), f'output/interpolation/interpolated_image_{int(image_nr)}.png'), interpolated_image)
-        image_path_list.append(f'interpolated_image_{int(image_nr)}.png')
+        
+        if image_nr < 10:
+            cv.imwrite(os.path.join(os.getcwd(), f'output/interpolation/interpolated_image_0{int(image_nr)}.png'), interpolated_image)
+            image_path_list.append(f'interpolated_image_0{int(image_nr)}.png')
+        else:
+            cv.imwrite(os.path.join(os.getcwd(), f'output/interpolation/interpolated_image_{int(image_nr)}.png'), interpolated_image)
+            image_path_list.append(f'interpolated_image_{int(image_nr)}.png')
         
         image_nr += 1
         
@@ -205,8 +210,8 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
         
     # Append the second image to the list
     #interpolated_image_list.append(img2.data)
-    cv.imwrite(os.path.join(os.getcwd(), f'output/interpolation/interpolated_image_{n}.png'), img2)
-    image_path_list.append(f'interpolated_image_{n}.png')
+    #cv.imwrite(os.path.join(os.getcwd(), f'output/interpolation/interpolated_image_{n}.png'), img2)
+    #image_path_list.append(f'interpolated_image_{n}.png')
     
     return (os.path.join(os.getcwd(), out_dir), image_path_list)
         

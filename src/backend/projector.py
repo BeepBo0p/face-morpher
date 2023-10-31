@@ -19,8 +19,8 @@ import PIL.Image
 import torch
 import torch.nn.functional as F
 
-import backend.dnnlib as dnnlib
-import backend.legacy as legacy
+import dnnlib as dnnlib
+import legacy as legacy
 
 def project(
     G,
@@ -211,7 +211,7 @@ def run_projection(
     synth_image = (synth_image + 1) * (255/2)
     synth_image = synth_image.permute(0, 2, 3, 1).clamp(0, 255).to(torch.uint8)[0].cpu().numpy()
     PIL.Image.fromarray(synth_image, 'RGB').save(f'{outdir}/{output_name}')
-    np.savez(f'{outdir}/projected_w.npz', w=projected_w.unsqueeze(0).cpu().numpy())
+    #np.savez(f'{outdir}/projected_w.npz', w=projected_w.unsqueeze(0).cpu().numpy())
 
 #----------------------------------------------------------------------------
 

@@ -2,13 +2,14 @@
 This file contains the code to run the backend pipeline without the GUI.
 It will be used for testing the project to ensure backend logic works as expected.
 """
-from backend.img_utils import *
-import backend.detect_face_features as dff
-import backend.interpolate as interp
-import backend.project_to_gan as ptg
+import detect_face_features as dff
+import interpolate as interp
+import project_to_gan as ptg
 import os
 import cv2 as cv
 import imageio as io
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 # Step 0. Define settings for pipeline run
@@ -26,9 +27,9 @@ img1_path = os.path.join(data_path, img1_name)
 img2_path = os.path.join(data_path, img2_name)
 
 # Pipeline settings
-interpolation_steps = 10
+interpolation_steps = 2
 idw_q_parameter = 2
-gan_refinement_steps = 500
+gan_refinement_steps = 10
 
 # Video/GIF settings
 output_name = "interpolation.gif"
@@ -38,7 +39,7 @@ def pre_process(
     img2_path: str,
     dst_path: str,
     target_resolution: (int, int),
-    ) -> tuple[Image, Image , list[np.ndarray], list[np.ndarray]]:
+    ) -> tuple[np.ndarray, np.ndarray , list[np.ndarray], list[np.ndarray]]:
 
     # Step 1. Load the images, verify that they are valid images (dimensions > 0 and 3 channels. Also dim(A) == dim(B))))
 
@@ -67,8 +68,10 @@ def pre_process(
     img2 = cv.resize(img2, target_resolution)
 
     # Show both images
-    show_image(img1)
-    show_image(img2)
+    plt.imshow(img1)
+    plt.show()
+    plt.imshow(img2)
+    plt.show()
 
     img_list = [img1, img2]
 
@@ -89,22 +92,22 @@ def morph_faces(
     facial_features_list: list[np.ndarray],
     output_path: str,
     output_name: str,
-    interpolation_steps: int = 10,
-    idw_q_parameter: int = 2,
-    gan_refinement_steps: int = 500
+    interpolation_steps: int = interpolation_steps,
+    idw_q_parameter: int = idw_q_parameter,
+    gan_refinement_steps: int = gan_refinement_steps
     ) -> bool:
 
     # Step 3. Interpolate the facial landmarks using IDW.
 
-    interpolation_path = os.path.join(project_path, 'output/interpolation')
+    interpolation_path = os.path.join(output_path, 'interpolation')
 
     interpolation_path, interpolated_images = interp.inverse_distance_interpolation(
         img1,
         img2,
         facial_features_list[0],
         facial_features_list[1],
-        n=10,
-        q=2,
+        n=interpolation_steps,
+        q=idw_q_parameter,
         out_dir=interpolation_path
         )
 
@@ -113,18 +116,20 @@ def morph_faces(
     # Step 4. Project the interpolated facial landmarks to the GAN.
 
     projection_sequence = []
+    
+    projection_path = os.path.join(output_path, 'projection')
 
     for image in interpolated_images:
         ptg.project_to_gan(
             src_path=interpolation_path,
-            outdir=output_path,
+            outdir=projection_path,
             save_video=False,
             seed=303,
-            num_steps=500,
+            num_steps=gan_refinement_steps,
             output_name=image
         )
         
-        projection_sequence.append(plt.imread(os.path.join(output_path, image)))
+        projection_sequence.append(plt.imread(os.path.join(projection_path, image)))
 
     print('==================== Interpolation sequence refined with StyleGAN ====================')
 
