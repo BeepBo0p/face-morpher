@@ -7,6 +7,7 @@ import backend.detect_face_features as dff
 import backend.interpolate as interp
 import backend.project_to_gan as ptg
 import os
+import cv2 as cv
 import imageio as io
 
 
@@ -14,8 +15,8 @@ import imageio as io
 
 # Image settings
 target_resolution = (256, 256)
-img1_name = "dorde.jpg"
-img2_name = "jørgen.jpg"
+img1_name = "dc.jpg"
+img2_name = "jc.jpg"
 
 # Path variables
 project_path = os.getcwd()
@@ -37,25 +38,33 @@ def pre_process(
     img2_path: str,
     dst_path: str,
     target_resolution: (int, int),
-    ) -> (Image, Image , list(np.ndarray), list(np.ndarray)):
+    ) -> tuple[Image, Image , list[np.ndarray], list[np.ndarray]]:
 
     # Step 1. Load the images, verify that they are valid images (dimensions > 0 and 3 channels. Also dim(A) == dim(B))))
 
     img1_path = os.path.join(data_path, img1_name)
     img2_path = os.path.join(data_path, img2_name)
 
-    img1 = load_image(img1_path)
-    img2 = load_image(img2_path)
+    img1 = cv.imread(img1_path)
+    img2 = cv.imread(img2_path)
 
     print('==================== Images loaded ====================')
 
     # Validate the images
 
-    if(not is_valid_image(img1) or not is_valid_image(img2)):
-        raise Exception("Invalid image(s).")
+    not_none = img1 is not None and img2 is not None
+    not_empty = img1.size > 0 and img2.size > 0
+    is_3_channel = len(img1.shape) == 3 and len(img2.shape) == 3
+    is_same_size = img1.shape == img2.shape
+    
+    valid = not_none and not_empty and is_3_channel and is_same_size
 
-    if(not is_same_size(img1, img2)):
-        raise Exception("Images must be the same size.")
+    if(not valid):
+        raise Exception("Invalid image(s).")
+    
+    # Resize the images to the target resolution using cv2
+    img1 = cv.resize(img1, target_resolution)
+    img2 = cv.resize(img2, target_resolution)
 
     # Show both images
     show_image(img1)
@@ -75,9 +84,9 @@ def pre_process(
     return img1, img2, facial_features_list[0], facial_features_list[1]
 
 def morph_faces(
-    img1: Image,
-    img2: Image,
-    facial_features_list: list(np.ndarray),
+    img1: np.ndarray,
+    img2: np.ndarray,
+    facial_features_list: list[np.ndarray],
     output_path: str,
     output_name: str,
     interpolation_steps: int = 10,
