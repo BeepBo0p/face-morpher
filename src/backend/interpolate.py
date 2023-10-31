@@ -1,11 +1,11 @@
 """
 This file contains methods needed to interpolate 2 images using IDW on the facial landmarks.
 """
-from img_utils import *
+from backend.img_utils import *
 import numpy as np
 import copy
 import os
-import detect_face_features as dff
+import backend.detect_face_features as dff
 from numba import njit, jit
 import cv2 as cv
 
@@ -24,7 +24,7 @@ def get_delta(x: np.array, y: np.array) -> np.array:
     return y - x
 
 
-def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, n: int, q: float, out_dir: str) -> tuple(str, list[str]):
+def inverse_distance_interpolation(img1: Image, img2: Image, features1: np.ndarray, features2: np.ndarray, n: int, q: float, out_dir: str) -> tuple[str, list[str]]:
     """Creates a sequence of interpolated images using facial features as guide.
     Features are interpolated are linearly interpolated between the 2 images along with the colour values at each time step t (out of n+1 steps).
     Each shifted feature is then used to compute a delta field using IDW to describe the shift of all other pixels in the image.

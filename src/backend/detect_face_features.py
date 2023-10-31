@@ -2,7 +2,7 @@
 This file contains the code for detecting the face features in an image.
     
 """
-from img_utils import *
+from backend.img_utils import *
 import numpy as np
 import dlib as dl
 import os
