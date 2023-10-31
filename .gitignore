@@ -2,3 +2,6 @@
 src/backend/__pycache__
 output/
 misc/
+src/backend/dnnlib/__pycache__
+src/backend/torch_utils/__pycache__
+src/backend/torch_utils/ops/__pycache__
