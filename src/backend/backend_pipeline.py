@@ -4,7 +4,7 @@ It will be used for testing the project to ensure backend logic works as expecte
 """
 import detect_face_features as dff
 import interpolate as interp
-import project_to_gan as ptg
+import projector
 import os
 import cv2 as cv
 import imageio as io
@@ -123,9 +123,21 @@ def morph_faces(
         
         print(f'Projecting {image} to GAN...')
         
+        """         
         ptg.project_to_gan(
             src_img_path=os.path.join(interpolation_path, image),
             outdir=projection_path,
+            save_video=False,
+            seed=303,
+            num_steps=gan_refinement_steps,
+            output_name=image
+        ) 
+        """
+        
+        projector.run_projection(
+            network_pkl='https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/ffhq.pkl',
+            target_fname=os.path.join(interpolation_path, image),
+            outdir = projection_path,
             save_video=False,
             seed=303,
             num_steps=gan_refinement_steps,
