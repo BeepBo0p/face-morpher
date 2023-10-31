@@ -27,7 +27,7 @@ img1_path = os.path.join(data_path, img1_name)
 img2_path = os.path.join(data_path, img2_name)
 
 # Pipeline settings
-interpolation_steps = 2
+interpolation_steps = 6
 idw_q_parameter = 2
 gan_refinement_steps = 10
 
@@ -120,8 +120,11 @@ def morph_faces(
     projection_path = os.path.join(output_path, 'projection')
 
     for image in interpolated_images:
+        
+        print(f'Projecting {image} to GAN...')
+        
         ptg.project_to_gan(
-            src_path=interpolation_path,
+            src_img_path=os.path.join(interpolation_path, image),
             outdir=projection_path,
             save_video=False,
             seed=303,
@@ -129,7 +132,7 @@ def morph_faces(
             output_name=image
         )
         
-        projection_sequence.append(plt.imread(os.path.join(projection_path, image)))
+        projection_sequence.append(io.v2.imread(os.path.join(projection_path, image)))
 
     print('==================== Interpolation sequence refined with StyleGAN ====================')
 
@@ -142,6 +145,18 @@ def morph_faces(
 
     print('==================== Face morphing sequence saved to gif ====================')
 
+def post_process(output_path: str) -> None:
+    
+    interpolation_path = os.path.join(output_path, 'interpolation')
+    projection_path = os.path.join(output_path, 'projection')
+    
+    # Delete the contents of interpolation and projection folders
+    for folder in [interpolation_path, projection_path]:
+        for file in os.listdir(folder):
+            os.remove(os.path.join(folder, file))
+            
+    print('==================== Intermediate Files Deleted ====================')
+    
 
 if __name__ == '__main__':
     
@@ -164,3 +179,5 @@ if __name__ == '__main__':
                 idw_q_parameter=idw_q_parameter,
                 gan_refinement_steps=gan_refinement_steps
                 )   
+    
+    post_process(output_path=output_path)
