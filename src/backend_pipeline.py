@@ -21,6 +21,8 @@ img2_name = "jørgen.jpg"
 project_path = os.getcwd()
 data_path = os.path.join(project_path, "data")
 output_path = os.path.join(project_path, 'output')
+img1_path = os.path.join(data_path, img1_name)
+img2_path = os.path.join(data_path, img2_name)
 
 # Pipeline settings
 interpolation_steps = 10
@@ -129,8 +131,22 @@ def morph_faces(
 
 if __name__ == '__main__':
     
-    pre_process()
+    img1, img2, img1_features, img2_features = pre_process(
+                                                            img1_path=img1_path,
+                                                            img2_path=img2_path,
+                                                            dst_path=output_path,
+                                                            target_resolution=target_resolution
+                                                            )
     
     # Adjust feature points here
     
-    morph_faces()
+    morph_faces(
+                img1=img1,
+                img2=img2,
+                facial_features_list=[img1_features, img2_features],
+                output_path=output_path,
+                output_name=output_name,
+                interpolation_steps=interpolation_steps,
+                idw_q_parameter=idw_q_parameter,
+                gan_refinement_steps=gan_refinement_steps
+                )   
