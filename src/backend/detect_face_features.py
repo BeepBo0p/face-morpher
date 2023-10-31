@@ -2,12 +2,13 @@
 This file contains the code for detecting the face features in an image.
     
 """
-from backend.img_utils import *
 import numpy as np
 import dlib as dl
 import os
+import cv2 as cv
+import matplotlib.pyplot as plt
 
-def detect_facial_features(img: Image) -> np.array:
+def detect_facial_features(img: np.ndarray) -> np.array:
     """
     This method detects the facial features in an image.
     Args:
@@ -18,45 +19,36 @@ def detect_facial_features(img: Image) -> np.array:
     """
     
     project_path = os.getcwd()
-    
-
     model_path = os.path.join(project_path, "rsc/models/shape_predictor_68_face_landmarks.dat")
     
     predictor = dl.shape_predictor(model_path)
+            
+    # Detect the face in the image
+    detector = dl.get_frontal_face_detector()
+    faces = detector(img, 1)
     
-    #TODO: Clean up and verify it works on non-grayscale images
-    # Convert the image to grayscale
-    #gray = convert_to_grayscale(img)
-    gray = img
+    print("Number of faces detected: {}".format(len(faces)))
     
-    if(is_valid_image(gray, rgb=True)):
+    if(len(faces) == 1):
+        # Get the facial features
+        landmarks = predictor(img, faces[0])
         
-        # Detect the face in the image
-        detector = dl.get_frontal_face_detector()
-        faces = detector(gray.data, 1)
+        # Show the image with the facial features
+        plt.imshow(img)
+        for i in range(68):
+            #print(f"landmark {i}: {landmarks.part(i)}")
+            landmark = landmarks.part(i)
+            plt.plot(landmarks.part(i).x, landmarks.part(i).y, "ro")
+        plt.show()
         
-        print("Number of faces detected: {}".format(len(faces)))
+        # Convert the facial features to a numpy array
+        facial_features = np.zeros((68, 2))
+        for i in range(68):
+            facial_features[i] = (landmarks.part(i).x, landmarks.part(i).y)
         
-        if(len(faces) == 1):
-            # Get the facial features
-            landmarks = predictor(gray.data, faces[0])
-            
-            # Show the image with the facial features
-            plt.imshow(gray.data, cmap="gray")
-            for i in range(68):
-                #print(f"landmark {i}: {landmarks.part(i)}")
-                landmark = landmarks.part(i)
-                plt.plot(landmarks.part(i).x, landmarks.part(i).y, "ro")
-            plt.show()
-            
-            # Convert the facial features to a numpy array
-            facial_features = np.zeros((68, 2))
-            for i in range(68):
-                facial_features[i] = (landmarks.part(i).x, landmarks.part(i).y)
-            
-            return facial_features.astype(int)
-        else:
-            print("No face detected")
+        return facial_features.astype(int)
+    else:
+        print("No face detected")
     
     
     
@@ -73,9 +65,9 @@ def test_face_detection():
     dorde_path = os.path.join(data_path, "dorde.jpg")
     jørgen_path = os.path.join(data_path, "jørgen.jpg")
     
-    img = load_image(img_path)
-    dorde = load_image(dorde_path)
-    jørgen = load_image(jørgen_path)
+    img = cv.imread(img_path)
+    dorde = cv.imread(dorde_path)
+    jørgen = cv.imread(jørgen_path)
     
     features = detect_facial_features(img)
     dorde_features = detect_facial_features(dorde)
