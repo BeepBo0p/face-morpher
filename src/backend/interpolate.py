@@ -75,7 +75,7 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
     # Create the steps for the interpolation
     timesteps = np.linspace(0, 1, n)
     
-    print(f'Timesteps: {timesteps}')
+    print(f'Timesteps: {[round(t, 2) for t in timesteps]}')
     
     # List to store the interpolated images
     slices = []
@@ -104,25 +104,20 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
         # Compute the interpolated features from image 2 in negative t-direction
         reverse_interpolated_pos_delta = feature_pos_delta * (1 - t)
         
-        #interpolated_col_delta = feature_col_delta * t
         
         interpolated_features = features1 + interpolated_pos_delta
-        #interpolated_colours = img1_colours + interpolated_col_delta
         
         # Round features and colours to integers
         interpolated_features = interpolated_features.astype(int)
-        #interpolated_colours = interpolated_colours
         
         feature_list.append(interpolated_features)
-        #colour_list.append(interpolated_colours)
         
-        # Print the first 5 interpolated features
-        print(f'Interpolated features: {interpolated_features[:1]}', end=' | ')
-        #print(f'Interpolated colours: {interpolated_colours[:1]}', end=' | ')
+        # Print the first interpolated features
+        print(f'Interpolated features: {[round(f, 2) for f in interpolated_features[0]]}', end=' | ')
         
         # Store the deltas in positive and negative t-direction together
         interpolated_pos_delta = np.concatenate((-1 * interpolated_pos_delta, reverse_interpolated_pos_delta), axis=1)
-        print(f'Interpolated delta: {interpolated_pos_delta[:1]}')
+        print(f'Interpolated delta: {[round(d, 2) for d in interpolated_pos_delta[0]]}')
         
         for i in range(interpolated_features.shape[0]):
             
@@ -154,7 +149,7 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
                 interpolated_delta_field[x][y] = inverse_distance_weighting(np.array([x,y], dtype=float), interpolated_features.astype(float), interpolated_pos_delta, q)
                 #print('|', end=' ')
         
-        print(f"Delta field computed for t={t}")
+        print(f"Delta field computed for t={t:.2f}")
         
         # 2. Using the delta field, bilinearly sample from both images and linearly interpolate between them
         
@@ -180,7 +175,7 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
                 # Compute the bilinear sampling
                 interpolated_image[x][y] = img1_sample * (1 - t) + img2_sample * t
         
-        print(f"Interpolated image computed for t={t}")
+        print(f"Interpolated image computed for t={t:.2f}")
         
         # 3. Store the interpolated image in a list
         

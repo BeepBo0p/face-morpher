@@ -46,7 +46,7 @@ def project(
     G = copy.deepcopy(G).eval().requires_grad_(False).to(device) # type: ignore
 
     # Compute w stats.
-    logprint(f'Computing W midpoint and stddev using {w_avg_samples} samples...')
+    #logprint(f'Computing W midpoint and stddev using {w_avg_samples} samples...')
     z_samples = np.random.RandomState(123).randn(w_avg_samples, G.z_dim).astype(np.float32)
     w_samples = G.mapping(torch.from_numpy(z_samples).to(device), None)  # [N, L, C]
     w_samples = w_samples[:, :1, :].cpu().numpy().astype(np.float32)       # [N, 1, C]
@@ -76,6 +76,9 @@ def project(
         buf[:] = torch.randn_like(buf)
         buf.requires_grad = True
 
+    final_loss = 0
+    final_dist = 0
+    
     for step in range(num_steps):
         # Learning rate schedule.
         t = step / num_steps
@@ -112,6 +115,9 @@ def project(
                     break
                 noise = F.avg_pool2d(noise, kernel_size=2)
         loss = dist + reg_loss * regularize_noise_weight
+        
+        final_loss = float(loss)
+        final_dist = float(dist)
 
         # Step
         optimizer.zero_grad(set_to_none=True)
@@ -128,7 +134,7 @@ def project(
                 buf -= buf.mean()
                 buf *= buf.square().mean().rsqrt()
 
-    return w_out.repeat([1, G.mapping.num_ws, 1])
+    return w_out.repeat([1, G.mapping.num_ws, 1]), final_dist, final_loss
 
 #----------------------------------------------------------------------------
 
@@ -160,7 +166,7 @@ def run_projection(
     torch.manual_seed(seed)
 
     # Load networks.
-    print('Loading networks from "%s"...' % network_pkl)
+    #print('Loading networks from "%s"...' % network_pkl)
     
     if torch.cuda.is_available():
         device = torch.device('cuda')
@@ -183,13 +189,14 @@ def run_projection(
 
     # Optimize projection.
     start_time = perf_counter()
-    projected_w_steps = project(
+    projected_w_steps, dist, loss = project(
         G,
         target=torch.tensor(target_uint8.transpose([2, 0, 1]), device=device), # pylint: disable=not-callable
         num_steps=num_steps,
         device=device,
         verbose=True
     )
+    print (f'{num_steps} steps | {dist:.2f} distance | {loss:.2f} loss', end=' | ')
     print (f'Elapsed: {(perf_counter()-start_time):.1f} s')
 
     # Render debug output: optional video and projected image and W vector.
