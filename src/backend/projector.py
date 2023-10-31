@@ -19,7 +19,7 @@ import PIL.Image
 import torch
 import torch.nn.functional as F
 
-import backend.dnnlib
+import backend.dnnlib as dnnlib
 import backend.legacy as legacy
 
 def project(

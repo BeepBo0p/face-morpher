@@ -20,7 +20,7 @@ The procedure will do the following:
 Luckily, NVIDIA has already made this for us (seemingly based on the image2stylegan paper), so we just call their code.
 
 """
-import backend.projector
+import backend.projector as projector
 import os
 
 def project_to_gan(src_path: str='output/interpolation', 
