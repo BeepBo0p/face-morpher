@@ -3,6 +3,7 @@ This file specifies the UI including the buttons and the layout of the UI.
 """
 # Local imports
 import backend_pipeline as bkp
+import detect_face_features as dff
 
 # Functional imports
 import os
@@ -33,7 +34,8 @@ image_1 = None
 image_2 = None
 feature_points_1 = []
 feature_points_2 = []
-
+add_points = True
+delete_points = False
 
 
 
@@ -116,6 +118,29 @@ def validate_and_load_images():
     # Resize the larger image to the size of the smaller image
     image_1 = cv.resize(image_1, (h, w))
     image_2 = cv.resize(image_2, (h, w))
+
+    img_list = [image_1, image_2]
+
+    facial_features_list = [[] for i in range(len(img_list))]
+
+    for i in range(len(img_list)):
+        facial_features_list[i] = dff.detect_facial_features(img_list[i])
+        
+    # Set the feature points
+    global feature_points_1
+    global feature_points_2
+    
+    feature_points_1 = facial_features_list[0]
+    feature_points_2 = facial_features_list[1]
+    
+    image_1_with_points = image_1.copy()
+    image_2_with_points = image_2.copy()
+    
+    for point in feature_points_1:
+        cv.circle(image_1_with_points, tuple(point), 1, (0, 255, 0), -1)
+    
+    for point in feature_points_2:
+        cv.circle(image_2_with_points, tuple(point), 1, (0, 255, 0), -1)
     
     # Create images in output folder as working copies
     cv.imwrite(os.path.join(output_path, "img1.jpg"), image_1)
@@ -124,10 +149,12 @@ def validate_and_load_images():
     # Display the images on the canvases
     global canvas_1
     global canvas_2
+    global photo_image_1
+    global photo_image_2
     
     # Create photo images from the images
-    photo_image_1 = ImageTk.PhotoImage(image=Image.fromarray(image_1))
-    photo_image_2 = ImageTk.PhotoImage(image=Image.fromarray(image_2))
+    photo_image_1 = ImageTk.PhotoImage(image=Image.fromarray(image_1_with_points))
+    photo_image_2 = ImageTk.PhotoImage(image=Image.fromarray(image_2_with_points))
     
     # Get the center coordinates of the canvas
 
@@ -139,26 +166,26 @@ def validate_and_load_images():
     canvas_1.create_image(cv1_center, image=photo_image_1, anchor=tk.CENTER)
     canvas_2.create_image(cv2_center, image=photo_image_2, anchor=tk.CENTER)
     
-    photo_image_1.update()
-    photo_image_2.update()
-    canvas_1.update()
-    canvas_2.update()
+    #photo_image_1.pack()
+    #photo_image_2.pack()
+    #canvas_1.update()
+    #canvas_2.update()
     
     # Enable the feature point buttons
     global add_points_button_1
-    global move_points_button_1
+    #global move_points_button_1
     global delete_points_button_1
     
     global add_points_button_2
-    global move_points_button_2
+    #global move_points_button_2
     global delete_points_button_2
     
     add_points_button_1.config(state="normal")
-    move_points_button_1.config(state="normal")
+    #move_points_button_1.config(state="normal")
     delete_points_button_1.config(state="normal")
     
     add_points_button_2.config(state="normal")
-    move_points_button_2.config(state="normal")
+    #move_points_button_2.config(state="normal")
     delete_points_button_2.config(state="normal")
 
     print("Images loaded successfully.")
@@ -167,120 +194,92 @@ def validate_and_load_images():
 
 # Feature point buttons
 # -------------------------------------------------------------- #
-def add_points_1():
-    """
-    Adds feature points to the image.
-    """
+def interact_with_feature_points_1():
+    
     global feature_points_1
     global feature_points_2
     
     global image_1
     global image_2
     
-    # Get nearest pixel coordinates at mouse click
+    global photo_image_1
+    global photo_image_2
     
-    # Add the pixel coordinates to the feature points list
+    global canvas_1
+    global canvas_2
     
-    # Add a corresponding point to the other image's feature points list
+    global move_points
+    global delete_points
+    global add_points
     
+    # Get coordinates of mouse click
+    x, y = canvas_1.winfo_pointerx(), canvas_1.winfo_pointery()
+    
+    # Transform the coordinates to the image coordinates
+    x, y = x - canvas_1.winfo_rootx(), y - canvas_1.winfo_rooty()
+
+    if add_points:
+        
+        # Add the coordinates to the feature points list
+        feature_points_1.append(np.array([x, y]))
+        
+        # Add a corresponding point to the other image's feature points list
+        feature_points_2.append(np.array([x, y]))
+        
+        
+    if delete_points:
+    
+        # Get nearest feature point to mouse click
+        nearest_feature_point = feature_points_1[0]
+        
+        for feature_point in feature_points_1:
+            if np.linalg.norm(feature_point - np.array([x, y])) < np.linalg.norm(nearest_feature_point - np.array([x, y])):
+                nearest_feature_point = feature_point
+                
+        # If point is close enough, move or delete it
+        if np.linalg.norm(nearest_feature_point - np.array([x, y])) < 10:
+          
+            # Find the index of the feature point in the feature points list
+            index = feature_points_1.index(nearest_feature_point)
+            
+            # Delete the feature point from the feature points list
+            feature_points_1.pop(index)
+            
+            # Delete the corresponding feature point from the other image's feature points list
+            feature_points_2.pop(index)
+                
     # Draw the feature points on the canvas for both images
-    pass
+    image_1_with_points = image_1.copy()
+    image_2_with_points = image_2.copy()
+    
+    for point in feature_points_1:
+        cv.circle(image_1_with_points, tuple(point), 1, (0, 255, 0), -1)
+    
+    for point in feature_points_2:
+        cv.circle(image_2_with_points, tuple(point), 1, (0, 255, 0), -1)
+        
+    # Create photo images from the images
+    photo_image_1 = ImageTk.PhotoImage(image=Image.fromarray(image_1_with_points))
+    photo_image_2 = ImageTk.PhotoImage(image=Image.fromarray(image_2_with_points))
 
-def add_points_2():
-    """
-    Adds feature points to the image.
-    """
-    global feature_points_1
-    global feature_points_2
+def set_add_points_1():
+    global add_points
+    global delete_points
     
-    global image_1
-    global image_2
+    add_points = True
+    delete_points = False
     
-    # Get nearest pixel coordinates at mouse click
+    print("Add points mode activated, add_points: ", add_points)
     
-    # Add the pixel coordinates to the feature points list
+def set_delete_points_1():
+    global add_points
+    global delete_points
     
-    # Add a corresponding point to the other image's feature points list
+    add_points = False
+    delete_points = True
     
-    # Draw the feature points on the canvas for both images
-    pass
-
-def move_points_1():
-    """
-    Moves feature points on the image.
-    """
-    global feature_points_1
-    global image_1
+    print("Delete points mode activated, delete_points: ", delete_points)
     
-    # Get nearest feature point to mouse click
-    
-    # Click at new position
-    
-    # Update the feature point coordinates
-    
-    # Update the canvas
-    
-    pass
-
-def move_points_2():
-    """
-    Moves feature points on the image.
-    """
-    global feature_points_2
-    global image_2
-    
-    # Get nearest feature point to mouse click
-    
-    # Click at new position
-    
-    # Update the feature point coordinates
-    
-    # Update the canvas
-    
-    pass
-
-def delete_points_1():
-    """
-    Deletes feature points on the image.
-    """
-    global image_1
-    global image_2
-    
-    global feature_points_1
-    global feature_points_2
-    
-    # Get nearest feature point to mouse click
-    
-    # Find the index of the feature point in the feature points list
-    
-    # Delete the feature point from the feature points list
-    
-    # Delete the corresponding feature point from the other image's feature points list
-    
-    # Update the canvas
-    pass
-
-def delete_points_2():
-    """
-    Deletes feature points on the image.
-    """
-    global image_1
-    global image_2
-    
-    global feature_points_1
-    global feature_points_2
-    
-    # Get nearest feature point to mouse click
-    
-    # Find the index of the feature point in the feature points list
-    
-    # Delete the feature point from the feature points list
-    
-    # Delete the corresponding feature point from the other image's feature points list
-    
-    # Update the canvas
-    pass
-
 
 # Pipeline buttons
 # -------------------------------------------------------------- #
@@ -406,6 +405,8 @@ play_photo = tk.PhotoImage(file=os.path.join(ui_rsc_path, "play.png"))
 move_photo = tk.PhotoImage(file=os.path.join(ui_rsc_path, "move.png"))
 delete_photo = tk.PhotoImage(file=os.path.join(ui_rsc_path, "delete.png"))
 add_points_photo = tk.PhotoImage(file=os.path.join(ui_rsc_path, "add.png"))
+photo_image_1 = None
+photo_image_2 = None
 
 # State variables
 # -------------------------------------------------------------- #
@@ -600,9 +601,9 @@ add_points_button_1 = tk.Button(
     image=add_points_photo, 
     bg="#FFFFFF",
     state="disabled",
-    command=add_points_1,
+    command=set_add_points_1,
     )
-
+"""
 move_points_button_1 = tk.Button(
     master=feature_points_1_frame, 
     image=move_photo, 
@@ -610,18 +611,18 @@ move_points_button_1 = tk.Button(
     state="disabled",
     command=move_points_1,
     )
-
+"""
 delete_points_button_1 = tk.Button(
     master=feature_points_1_frame,
     image=delete_photo,
     bg="#FFFFFF",
     state="disabled",
-    command=delete_points_1,
+    command=set_delete_points_1,
     )
 
 # Pack the feature point buttons
 add_points_button_1.pack(side=tk.LEFT)
-move_points_button_1.pack(side=tk.LEFT)
+#move_points_button_1.pack(side=tk.LEFT)
 delete_points_button_1.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
@@ -650,9 +651,9 @@ add_points_button_2 = tk.Button(
     image=add_points_photo,
     bg="#FFFFFF",
     state="disabled",
-    command=add_points_2
+    command=set_add_points_1
     )
-
+"""
 move_points_button_2 = tk.Button(
     master=feature_points_2_frame,
     image=move_photo,
@@ -660,18 +661,18 @@ move_points_button_2 = tk.Button(
     state="disabled",
     command=move_points_2
     )
-
+"""
 delete_points_button_2 = tk.Button(
     master=feature_points_2_frame, 
     image=delete_photo, 
     bg="#FFFFFF",
     state="disabled",
-    command=delete_points_2
+    command=set_delete_points_1
     )
 
 # Pack the feature point buttons
 add_points_button_2.pack(side=tk.LEFT)
-move_points_button_2.pack(side=tk.LEFT)
+#move_points_button_2.pack(side=tk.LEFT)
 delete_points_button_2.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
