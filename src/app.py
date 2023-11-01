@@ -13,6 +13,7 @@ import numpy as np
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as fd
+from PIL import ImageTk, Image
 
 # -------------------------------------------------------------- #
 # Global variables                                               #
@@ -47,24 +48,42 @@ def open_image_1():
     Opens an image from the file system and displays it on the canvas.
     """
     global img_1_path
+    global img_2_path
+    global load_button
     
-    path = fd.askopenfilename()
+    path = fd.askopenfilename(
+        filetypes=[('JPEG', '*.jpg'), ('PNG', '*.png')]
+    )
+    
+    if path == "":
+        return
     
     img_1_path.set(path)
-    
     print(f'Image 1 path set to {path}')
+    
+    if img_2_path.get() != "":
+        load_button.config(state="normal")
     
 def open_image_2():
     """
     Opens an image from the file system and displays it on the canvas.
     """
+    global img_1_path
     global img_2_path
+    global load_button
     
-    path = fd.askopenfilename()
+    path = fd.askopenfilename(
+        filetypes=[('JPEG', '*.jpg'), ('PNG', '*.png')]
+    )
     
-    img_2_path.set(path)    
-
+    if path == "":
+        return
+    
+    img_2_path.set(path)
     print(f'Image 2 path set to {path}')
+    
+    if img_1_path.get() != "":
+        load_button.config(state="normal")
         
 def validate_and_load_images():
     """
@@ -76,18 +95,73 @@ def validate_and_load_images():
     global img_2_path
     
     # Check if the image paths are valid
+    if img_1_path.get() == "" or img_2_path.get() == "":
+        raise ValueError("Image paths are not valid.")
     
     # Load the images into memory
+    image_1 = cv.imread(img_1_path.get())
+    image_2 = cv.imread(img_2_path.get())
     
     # Check if the images are (approximately) the same ratio
+    ratio_1 = image_1.shape[0] / image_1.shape[1]
+    ratio_2 = image_2.shape[0] / image_2.shape[1]
+    
+    if abs(ratio_1 - ratio_2) > 0.1:
+        raise ValueError("Images are not the same ratio. Please crop them to proceed.")
     
     # Find the smaller image
+    w, h, _ = min(image_1.shape, image_2.shape)
+    
     
     # Resize the larger image to the size of the smaller image
+    image_1 = cv.resize(image_1, (h, w))
+    image_2 = cv.resize(image_2, (h, w))
+    
+    # Create images in output folder as working copies
+    cv.imwrite(os.path.join(output_path, "img1.jpg"), image_1)
+    cv.imwrite(os.path.join(output_path, "img2.jpg"), image_2)
     
     # Display the images on the canvases
-    pass
+    global canvas_1
+    global canvas_2
     
+    # Create photo images from the images
+    photo_image_1 = ImageTk.PhotoImage(image=Image.fromarray(image_1))
+    photo_image_2 = ImageTk.PhotoImage(image=Image.fromarray(image_2))
+    
+    # Get the center coordinates of the canvas
+
+    cv1_center = (canvas_1.winfo_width()//2, canvas_1.winfo_height()//2)
+    cv2_center = (canvas_2.winfo_width()//2, canvas_2.winfo_height()//2)
+    
+    
+    # Place the image in the center of the canvas
+    canvas_1.create_image(cv1_center, image=photo_image_1, anchor=tk.CENTER)
+    canvas_2.create_image(cv2_center, image=photo_image_2, anchor=tk.CENTER)
+    
+    photo_image_1.update()
+    photo_image_2.update()
+    canvas_1.update()
+    canvas_2.update()
+    
+    # Enable the feature point buttons
+    global add_points_button_1
+    global move_points_button_1
+    global delete_points_button_1
+    
+    global add_points_button_2
+    global move_points_button_2
+    global delete_points_button_2
+    
+    add_points_button_1.config(state="normal")
+    move_points_button_1.config(state="normal")
+    delete_points_button_1.config(state="normal")
+    
+    add_points_button_2.config(state="normal")
+    move_points_button_2.config(state="normal")
+    delete_points_button_2.config(state="normal")
+
+    print("Images loaded successfully.")
     
     
 
@@ -456,7 +530,7 @@ target_resolution_dropdown = ttk.Combobox(
     values=target_resolution_options, 
     foreground="#000000",
     background="#FFFFFF",
-    state="readonly", 
+    state="readonly",
     )
 
 # Target name (text field)
@@ -475,6 +549,7 @@ done_button = tk.Button(
     master=menu, 
     image=done_photo, 
     bg="#FFFFFF",
+    state="disabled",
     command=validate_settings,
     )
 
@@ -500,52 +575,62 @@ resolution_label.pack(side=tk.BOTTOM, fill=tk.X, pady=(0.2*h,0))
 
 # Defining the canvases for image display
 # -------------------------------------------------------------- #
-canvas_frame = tk.Frame(master=app, width=0.9*w, height=h, bg="#808080")
-canvas_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+#canvas_frame = tk.Frame(master=app, width=0.9*w, height=h, bg="#808080")
+#canvas_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+canvas_1_frame = tk.Frame(master=app, width=0.45*w, height=h, bg="#FFFFFF")
+canvas_2_frame = tk.Frame(master=app, width=0.45*w, height=h, bg="#FFFFFF")
+
+canvas_1_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+canvas_2_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 # Defining the canvas for image 1
-canvas_1 = tk.Canvas(master=canvas_frame, width=0.45*w, height=h, bg="#FFFFFF")
-canvas_1.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+canvas_1 = tk.Canvas(master=canvas_1_frame, width=0.45*w, height=0.95*h, bg="#FFFFFF")
+canvas_1.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
 
 # Add feature points button grid
 feature_points_1_frame = tk.Frame(
-    master=canvas_1, width=0.45*w, height=0.05*h, bg="#FFFFFF")
+    master=canvas_1_frame, width=0.45*w, height=0.05*h, bg="#FFFFFF")
 feature_points_1_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
 
-add_points_button = tk.Button(
+add_points_button_1 = tk.Button(
     master=feature_points_1_frame, 
     image=add_points_photo, 
     bg="#FFFFFF",
+    state="disabled",
     command=add_points_1,
     )
 
-move_points_button = tk.Button(
+move_points_button_1 = tk.Button(
     master=feature_points_1_frame, 
     image=move_photo, 
     bg="#FFFFFF",
+    state="disabled",
     command=move_points_1,
     )
 
-delete_points_button = tk.Button(
+delete_points_button_1 = tk.Button(
     master=feature_points_1_frame,
     image=delete_photo,
     bg="#FFFFFF",
+    state="disabled",
     command=delete_points_1,
     )
 
 # Pack the feature point buttons
-add_points_button.pack(side=tk.LEFT)
-move_points_button.pack(side=tk.LEFT)
-delete_points_button.pack(side=tk.RIGHT, padx=(0.3*w,0))
+add_points_button_1.pack(side=tk.LEFT)
+move_points_button_1.pack(side=tk.LEFT)
+delete_points_button_1.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
 
 
 
 # Adding a separator
-separator = ttk.Separator(master=canvas_frame, orient=tk.VERTICAL)
-separator.pack(side=tk.LEFT, fill=tk.Y, )#padx=(0.005*w,0.005*w))
+#separator = ttk.Separator(master=canvas_frame, orient=tk.VERTICAL)
+#separator.pack(side=tk.LEFT, fill=tk.Y, )#padx=(0.005*w,0.005*w))
 
 
 
@@ -553,38 +638,41 @@ separator.pack(side=tk.LEFT, fill=tk.Y, )#padx=(0.005*w,0.005*w))
 
 
 # Defining the canvas for image 2
-canvas_2 = tk.Canvas(master=canvas_frame, width=0.45*w, height=h, bg="#FFFFFF")
-canvas_2.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+canvas_2 = tk.Canvas(master=canvas_2_frame, width=0.45*w, height=0.95*h, bg="#FFFFFF")
+canvas_2.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 feature_points_2_frame = tk.Frame(
-    master=canvas_2, width=0.45*w, height=0.05*h, bg="#FFFFFF")
+    master=canvas_2_frame, width=0.45*w, height=0.05*h, bg="#FFFFFF")
 feature_points_2_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
-add_points_button = tk.Button(
+add_points_button_2 = tk.Button(
     master=feature_points_2_frame, 
     image=add_points_photo,
     bg="#FFFFFF",
+    state="disabled",
     command=add_points_2
     )
 
-move_points_button = tk.Button(
+move_points_button_2 = tk.Button(
     master=feature_points_2_frame,
     image=move_photo,
     bg="#FFFFFF",
+    state="disabled",
     command=move_points_2
     )
 
-delete_points_button = tk.Button(
+delete_points_button_2 = tk.Button(
     master=feature_points_2_frame, 
     image=delete_photo, 
     bg="#FFFFFF",
+    state="disabled",
     command=delete_points_2
     )
 
 # Pack the feature point buttons
-add_points_button.pack(side=tk.LEFT)
-move_points_button.pack(side=tk.LEFT)
-delete_points_button.pack(side=tk.RIGHT, padx=(0.3*w,0))
+add_points_button_2.pack(side=tk.LEFT)
+move_points_button_2.pack(side=tk.LEFT)
+delete_points_button_2.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
 # Run the app
