@@ -49,44 +49,76 @@ menu.pack(side=tk.LEFT, fill=tk.Y)
 # Defining the options
 
 # Image loading buttons
-load_photo_1_button = tk.Button(master=menu, image=load_photo, text="Load Image 1", bg="#FFFFFF")
-load_photo_2_button = tk.Button(master=menu, image=load_photo, text="Load Image 2", bg="#FFFFFF")
+load_photo_1_button = tk.Button(master=menu, image=load_photo, text="Load Image 1", bg="#FFFFFF", foreground="#000000")
+load_photo_2_button = tk.Button(master=menu, image=load_photo, text="Load Image 2", bg="#FFFFFF", foreground="#000000")
 
 # Image target resolution (dropdown menu with 3 options: original, half, quarter)
-resolution_label = tk.Label(master=menu, text="Target Resolution")
+resolution_label = tk.Label(master=menu, text="Target Resolution", bg="#FFFFFF", foreground="#000000")
+target_resolution = tk.StringVar(value="original")
 target_resolution_options = ["original", "half", "quarter"]
-target_resolution = ttk.Combobox(master=menu, values=target_resolution_options, state="readonly", )
+target_resolution_dropdown = ttk.Combobox(
+    master=menu, 
+    textvariable=target_resolution, 
+    values=target_resolution_options, 
+    foreground="#000000",
+    background="#FFFFFF",
+    state="readonly", 
+    )
 
 # Pack the image loading buttons
 load_photo_1_button.pack(side=tk.TOP, fill=tk.X)
 load_photo_2_button.pack(side=tk.TOP, fill=tk.X)
 resolution_label.pack(side=tk.TOP, fill=tk.X)
-target_resolution.pack(side=tk.TOP, fill=tk.X, pady=(0, 0.2*h))
+target_resolution_dropdown.pack(side=tk.TOP, fill=tk.X, pady=(0, 0.2*h))
 
-# Padding
+
 
 
 # Pipeline settings
 
 # Interpolation steps (slider with range 10-100)
-interpolation_steps_label = tk.Label(master=menu, text="Interpolation Steps")
+interpolation_steps_label = tk.Label(master=menu, text="Interpolation Steps", bg="#FFFFFF", foreground="#000000")
 interpolation_steps = tk.IntVar(value=40)
-interpolation_steps_slider = tk.Scale(master=menu, from_=10, to=100, variable=interpolation_steps, orient=tk.HORIZONTAL, length=0.1*w, bg="#FFFFFF")
+interpolation_steps_slider = tk.Scale(
+    master=menu, 
+    from_=10, to=100, 
+    variable=interpolation_steps, 
+    orient=tk.HORIZONTAL, 
+    length=0.1*w, 
+    bg="#FFFFFF",
+    foreground="#000000"
+    )
 
 # IDW q parameter (slider with range 1-10)
-IDW_q_parameter_label = tk.Label(master=menu, text="IDW q Parameter")
+IDW_q_parameter_label = tk.Label(master=menu, text="IDW q Parameter", bg="#FFFFFF", foreground="#000000")
 IDW_q_parameter = tk.IntVar(value=2)
-IDW_q_parameter_slider = tk.Scale(master=menu, from_=1, to=10, variable=IDW_q_parameter, orient=tk.HORIZONTAL, length=0.1*w, bg="#FFFFFF")
+IDW_q_parameter_slider = tk.Scale(
+    master=menu, 
+    from_=1, to=10, 
+    variable=IDW_q_parameter, 
+    orient=tk.HORIZONTAL, 
+    length=0.1*w, 
+    bg="#FFFFFF",
+    foreground="#000000"
+    )
 
 # GAN refinement steps (slider with range 100-1000, step size 100)
-GAN_refinement_steps_label = tk.Label(master=menu, text="GAN Refinement Steps")
+GAN_refinement_steps_label = tk.Label(master=menu, text="GAN Refinement Steps", bg="#FFFFFF", foreground="#000000")
 GAN_refinement_steps = tk.IntVar(value=500)
-GAN_refinement_steps_slider = tk.Scale(master=menu, from_=100, to=1000, variable=GAN_refinement_steps, orient=tk.HORIZONTAL, length=0.1*w, bg="#FFFFFF")
+GAN_refinement_steps_slider = tk.Scale(
+    master=menu, 
+    from_=100, to=1000, 
+    variable=GAN_refinement_steps, 
+    orient=tk.HORIZONTAL, 
+    length=0.1*w, 
+    bg="#FFFFFF",
+    foreground="#000000"
+    )
 
 # Target name (text field)
-target_name_label = tk.Label(master=menu, text="Target Name")
+target_name_label = tk.Label(master=menu, text="Target Name", bg="#FFFFFF", foreground="#000000")
 target = tk.StringVar(value="facemorph")
-target_name_entry = tk.Entry(master=menu, textvariable=target, bg="#FFFFFF")
+target_name_entry = tk.Entry(master=menu, textvariable=target, bg="#FFFFFF", foreground="#000000")
 
 
 # Pack the pipeline settings
