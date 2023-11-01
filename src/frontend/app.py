@@ -69,24 +69,20 @@ load_photo_2_button = tk.Button(
     foreground="#000000"
     )
 
-# Image target resolution (dropdown menu with 3 options: original, half, quarter)
-resolution_label = tk.Label(master=menu, text="Target Resolution", bg="#FFFFFF", foreground="#000000")
-target_resolution = tk.StringVar(value="original")
-target_resolution_options = ["original", "half", "quarter"]
-target_resolution_dropdown = ttk.Combobox(
+# Done button
+load_button = tk.Button(
     master=menu, 
-    textvariable=target_resolution, 
-    values=target_resolution_options, 
-    foreground="#000000",
-    background="#FFFFFF",
-    state="readonly", 
+    image=done_photo, 
+    bg="#FFFFFF",
+    state="disabled",
     )
+
+
 
 # Pack the image loading buttons
 load_photo_1_button.pack(side=tk.TOP, fill=tk.X)
 load_photo_2_button.pack(side=tk.TOP, fill=tk.X)
-resolution_label.pack(side=tk.TOP, fill=tk.X)
-target_resolution_dropdown.pack(side=tk.TOP, fill=tk.X, pady=(0, 0.2*h))
+load_button.pack(side=tk.TOP, fill=tk.X, pady=(0, 0.2*h))
 
 
 
@@ -143,6 +139,20 @@ GAN_refinement_steps_slider.pack(side=tk.TOP, fill=tk.X)
 GAN_refinement_steps_label.pack(side=tk.TOP, fill=tk.X, pady=(0,10))
 
 
+
+# Image target resolution (dropdown menu with 3 options: original, half, quarter)
+resolution_label = tk.Label(master=menu, text="Target Resolution", bg="#FFFFFF", foreground="#000000")
+target_resolution = tk.StringVar(value="original")
+target_resolution_options = ["original", "half", "quarter"]
+target_resolution_dropdown = ttk.Combobox(
+    master=menu, 
+    textvariable=target_resolution, 
+    values=target_resolution_options, 
+    foreground="#000000",
+    background="#FFFFFF",
+    state="readonly", 
+    )
+
 # Target name (text field)
 target_name_label = tk.Label(master=menu, text="Target Name", bg="#FFFFFF", foreground="#000000")
 target = tk.StringVar(value="facemorph")
@@ -173,7 +183,9 @@ start_pipeline_button = tk.Button(
 start_pipeline_button.pack(side=tk.BOTTOM, fill=tk.X)
 done_button.pack(side=tk.BOTTOM, fill=tk.X)
 target_name_entry.pack(side=tk.BOTTOM, fill=tk.X, pady=(0, 10))
-target_name_label.pack(side=tk.BOTTOM, fill=tk.X, pady=(0.2*h,0))
+target_name_label.pack(side=tk.BOTTOM, fill=tk.X, )
+target_resolution_dropdown.pack(side=tk.BOTTOM, fill=tk.X, )
+resolution_label.pack(side=tk.BOTTOM, fill=tk.X, pady=(0.2*h,0))
 
 
 
