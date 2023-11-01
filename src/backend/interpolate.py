@@ -61,7 +61,7 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
     image_nr = 0
     image_path_list = []
     
-    TODO: Use 	cv.calcOpticalFlowPyrLK() (sparse optical flow) to compute the delta field
+    #TODO: Use 	cv.calcOpticalFlowPyrLK() (sparse optical flow) to compute the delta field
     
     for t in timesteps:
         
