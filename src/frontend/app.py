@@ -172,6 +172,11 @@ delete_points_button = tk.Button(master=feature_points_1_frame, image=delete_pho
 delete_points_button.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
+# Adding a separator
+separator = ttk.Separator(master=canvas_frame, orient=tk.VERTICAL)
+separator.pack(side=tk.LEFT, fill=tk.Y, padx=(0.005*w,0.005*w))
+
+
 # Defining the canvas for image 2
 canvas_2 = tk.Canvas(master=canvas_frame, width=0.45*w, height=h, bg="#FFFFFF")
 canvas_2.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
