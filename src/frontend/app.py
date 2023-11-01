@@ -228,9 +228,17 @@ add_points_button.pack(side=tk.LEFT)
 move_points_button.pack(side=tk.LEFT)
 delete_points_button.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
+
+
+
+
 # Adding a separator
 separator = ttk.Separator(master=canvas_frame, orient=tk.VERTICAL)
-separator.pack(side=tk.LEFT, fill=tk.Y, padx=(0.005*w,0.005*w))
+separator.pack(side=tk.LEFT, fill=tk.Y, )#padx=(0.005*w,0.005*w))
+
+
+
+
 
 
 # Defining the canvas for image 2
