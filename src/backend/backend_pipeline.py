@@ -155,10 +155,12 @@ def morph_faces(
     print('==================== Interpolation sequence refined with StyleGAN ====================')
 
     # Step 5. Save the interpolated images to a gif.
-    
-    projection_sequence = [cv.resize(image, target_resolution) for image in projection_sequence]
-    
-    video = io.get_writer(os.path.join(output_path,output_name), mode='I', fps=10, codec='libx264', bitrate='16M')
+
+    projection_sequence = [cv.resize(image, target_resolution)
+                           for image in projection_sequence]
+
+    video = io.get_writer(os.path.join(output_path, output_name),
+                          mode='I', fps=10, codec='libx264', bitrate='16M')
     for image in projection_sequence:
         video.append_data(image)
     video.close()
@@ -193,9 +195,9 @@ def morph_latent_face(
     output_name: str,
     interpolation_steps: int = interpolation_steps,
     gan_refinement_steps: int = gan_refinement_steps
-    ) -> bool:
+) -> bool:
     pass
-    
+
 
 if __name__ == '__main__':
 
@@ -207,7 +209,7 @@ if __name__ == '__main__':
     )
 
     # Adjust feature points here
-    #TODO: Compute the Delaunay triangulation of the feature points to create a mesh, then use mesh-subdivision to create more feature points
+    # TODO: Compute the Delaunay triangulation of the feature points to create a mesh, then use mesh-subdivision to create more feature points
 
     morph_faces(
         img1=img1,
