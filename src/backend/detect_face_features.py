@@ -34,7 +34,7 @@ def detect_facial_features(img: np.ndarray) -> np.array:
         landmarks = predictor(img, faces[0])
         
         # Show the image with the facial features
-        plt.imshow(img)
+        plt.imshow(img.reshape(img.shape)[:, :, ::-1])
         for i in range(68):
             #print(f"landmark {i}: {landmarks.part(i)}")
             landmark = landmarks.part(i)
