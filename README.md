@@ -9,14 +9,14 @@ Use this workspace to solve your assignments and projects during the course CS43
 ## Basic features
 
 
-- [ ] 1. Load 2 RBG images of two faces from disk 
-- [ ] 2. Run a pre-trained face landmark detector on both images.
+- [x] 1. Load 2 RBG images of two faces from disk 
+- [x] 2. Run a pre-trained face landmark detector on both images.
 - [ ] 3. Allow user to edit/add/remove the landmarks (UI)
-- [ ] 4. Interpolate the landmark positions and colours from both images (create a morphing sequence for the landmarks alone). Notes: Results may be poor without adding more landmark points in step 3.
-- [ ] 5. Complete the remaining pixels using Shephard Interpolation (IDW).
-- [ ] 6. Project the image to a pretrained GAN (e.g. using GAN inversion or Pivotal tuning to improve the image)
-- [ ] 7. Repeat steps 4-7 for the entire morphing sequence.
-- [ ] 8. Save the result (image sequence, video or GIF).
+- [x] 4. Interpolate the landmark positions and colours from both images (create a morphing sequence for the landmarks alone). Notes: Results may be poor without adding more landmark points in step 3.
+- [x] 5. Complete the remaining pixels using Shephard Interpolation (IDW).
+- [x] 6. Project the image to a pretrained GAN (e.g. using GAN inversion or Pivotal tuning to improve the image)
+- [x] 7. Repeat steps 4-7 for the entire morphing sequence.
+- [x] 8. Save the result (image sequence, video or GIF).
 
 ### Can be implemented using 3rd party lib
 - image loading
