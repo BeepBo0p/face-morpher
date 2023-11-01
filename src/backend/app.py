@@ -2,7 +2,7 @@
 This file specifies the UI including the buttons and the layout of the UI.
 """
 # Local imports
-from backend import backend_pipeline as bkp
+import backend_pipeline as bkp
 
 # Functional imports
 import os
