@@ -1,18 +1,25 @@
 """
 This file specifies the UI including the buttons and the layout of the UI.
 """
+import backend as bk
+
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as fd
 import os
 
+# -------------------------------------------------------------- #
+# Global variables                                               #
+# -------------------------------------------------------------- #
 
 # Paths
+# -------------------------------------------------------------- #
 project_path = os.getcwd()
 data_path = os.path.join(project_path, "data")
 output_path = os.path.join(project_path, 'output')
 rsc_path = os.path.join(project_path, 'rsc')
 ui_rsc_path = os.path.join(rsc_path, 'ui')
+
 
 
 # -------------------------------------------------------------- #
@@ -121,6 +128,14 @@ move_photo = tk.PhotoImage(file=os.path.join(ui_rsc_path, "move.png"))
 delete_photo = tk.PhotoImage(file=os.path.join(ui_rsc_path, "delete.png"))
 add_points_photo = tk.PhotoImage(file=os.path.join(ui_rsc_path, "add.png"))
 
+# State variables
+# -------------------------------------------------------------- #
+img_1_path = tk.StringVar(value="")
+img_2_path = tk.StringVar(value="")
+interpolation_steps = tk.IntVar(value=40)
+IDW_q_parameter = tk.IntVar(value=2)
+GAN_refinement_steps = tk.IntVar(value=500)
+
 
 # Defining the menu bar
 # -------------------------------------------------------------- #
@@ -132,7 +147,6 @@ menu.pack(side=tk.LEFT, fill=tk.Y)
 # Image loading buttons
 # -------------------------------------------------------------- #
 
-img_1_path = tk.StringVar(value="")
 load_photo_1_button = tk.Button(
     master=menu, 
     image=load_photo, 
@@ -143,7 +157,6 @@ load_photo_1_button = tk.Button(
     command=open_image_1
     )
 
-img_2_path = tk.StringVar(value="")
 load_photo_2_button = tk.Button(
     master=menu, 
     image=load_photo, 
@@ -159,6 +172,7 @@ load_button = tk.Button(
     image=done_photo, 
     bg="#FFFFFF",
     state="disabled",
+    command=validate_and_load_images
     )
 
 
@@ -176,10 +190,10 @@ load_button.pack(side=tk.TOP, fill=tk.X, pady=(0, 0.2*h))
 
 # Interpolation steps (slider with range 10-100)
 interpolation_steps_label = tk.Label(master=menu, text="Interpolation Steps", bg="#FFFFFF", foreground="#000000")
-interpolation_steps = tk.IntVar(value=40)
 interpolation_steps_slider = tk.Scale(
     master=menu, 
-    from_=10, to=100, 
+    from_=10, 
+    to=100, 
     variable=interpolation_steps, 
     orient=tk.HORIZONTAL, 
     length=0.1*w, 
@@ -189,10 +203,10 @@ interpolation_steps_slider = tk.Scale(
 
 # IDW q parameter (slider with range 1-10)
 IDW_q_parameter_label = tk.Label(master=menu, text="IDW q Parameter", bg="#FFFFFF", foreground="#000000")
-IDW_q_parameter = tk.IntVar(value=2)
 IDW_q_parameter_slider = tk.Scale(
     master=menu, 
-    from_=1, to=10, 
+    from_=1,
+    to=10, 
     variable=IDW_q_parameter, 
     orient=tk.HORIZONTAL, 
     length=0.1*w, 
@@ -202,10 +216,10 @@ IDW_q_parameter_slider = tk.Scale(
 
 # GAN refinement steps (slider with range 100-1000, step size 100)
 GAN_refinement_steps_label = tk.Label(master=menu, text="GAN Refinement Steps", bg="#FFFFFF", foreground="#000000")
-GAN_refinement_steps = tk.IntVar(value=500)
 GAN_refinement_steps_slider = tk.Scale(
     master=menu, 
-    from_=100, to=1000, 
+    from_=100, 
+    to=1000, 
     variable=GAN_refinement_steps, 
     orient=tk.HORIZONTAL, 
     length=0.1*w, 
@@ -247,7 +261,7 @@ target_name_entry = tk.Entry(
     master=menu, 
     textvariable=target, 
     bg="#FFFFFF", 
-    foreground="#000000"
+    foreground="#000000",
     )
 
 
@@ -255,7 +269,8 @@ target_name_entry = tk.Entry(
 done_button = tk.Button(
     master=menu, 
     image=done_photo, 
-    bg="#FFFFFF"
+    bg="#FFFFFF",
+    command=validate_settings,
     )
 
 # Start button
@@ -263,7 +278,8 @@ start_pipeline_button = tk.Button(
     master=menu, 
     image=play_photo, 
     bg="#FFFFFF", 
-    state="disabled"
+    state="disabled",
+    command=start_pipeline,
     )
 
 # Pack the start options
@@ -295,19 +311,22 @@ feature_points_1_frame.pack(side=tk.BOTTOM, fill=tk.X)
 add_points_button = tk.Button(
     master=feature_points_1_frame, 
     image=add_points_photo, 
-    bg="#FFFFFF"
+    bg="#FFFFFF",
+    command=add_points_1,
     )
 
 move_points_button = tk.Button(
     master=feature_points_1_frame, 
     image=move_photo, 
-    bg="#FFFFFF"
+    bg="#FFFFFF",
+    command=move_points_1,
     )
 
 delete_points_button = tk.Button(
     master=feature_points_1_frame,
     image=delete_photo,
-    bg="#FFFFFF"
+    bg="#FFFFFF",
+    command=delete_points_1,
     )
 
 # Pack the feature point buttons
@@ -339,19 +358,22 @@ feature_points_2_frame.pack(side=tk.BOTTOM, fill=tk.X)
 add_points_button = tk.Button(
     master=feature_points_2_frame, 
     image=add_points_photo,
-    bg="#FFFFFF"
+    bg="#FFFFFF",
+    command=add_points_2
     )
 
 move_points_button = tk.Button(
     master=feature_points_2_frame,
     image=move_photo,
-    bg="#FFFFFF"
+    bg="#FFFFFF",
+    command=move_points_2
     )
 
 delete_points_button = tk.Button(
     master=feature_points_2_frame, 
     image=delete_photo, 
-    bg="#FFFFFF"
+    bg="#FFFFFF",
+    command=delete_points_2
     )
 
 # Pack the feature point buttons
