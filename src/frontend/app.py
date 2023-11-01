@@ -49,8 +49,25 @@ menu.pack(side=tk.LEFT, fill=tk.Y)
 # Defining the options
 
 # Image loading buttons
-load_photo_1_button = tk.Button(master=menu, image=load_photo, text="Load Image 1", bg="#FFFFFF", foreground="#000000")
-load_photo_2_button = tk.Button(master=menu, image=load_photo, text="Load Image 2", bg="#FFFFFF", foreground="#000000")
+
+img_1_path = tk.StringVar(value="")
+load_photo_1_button = tk.Button(
+    master=menu, 
+    image=load_photo, 
+    text="Load Image 1", 
+    textvariable=img_1_path,
+    bg="#FFFFFF", 
+    foreground="#000000"
+    )
+
+img_2_path = tk.StringVar(value="")
+load_photo_2_button = tk.Button(
+    master=menu, 
+    image=load_photo, 
+    text="Load Image 2", 
+    bg="#FFFFFF", 
+    foreground="#000000"
+    )
 
 # Image target resolution (dropdown menu with 3 options: original, half, quarter)
 resolution_label = tk.Label(master=menu, text="Target Resolution", bg="#FFFFFF", foreground="#000000")
@@ -129,14 +146,28 @@ GAN_refinement_steps_label.pack(side=tk.TOP, fill=tk.X, pady=(0,10))
 # Target name (text field)
 target_name_label = tk.Label(master=menu, text="Target Name", bg="#FFFFFF", foreground="#000000")
 target = tk.StringVar(value="facemorph")
-target_name_entry = tk.Entry(master=menu, textvariable=target, bg="#FFFFFF", foreground="#000000")
+target_name_entry = tk.Entry(
+    master=menu, 
+    textvariable=target, 
+    bg="#FFFFFF", 
+    foreground="#000000"
+    )
 
 
 # Done button
-done_button = tk.Button(master=menu, image=done_photo, bg="#FFFFFF")
+done_button = tk.Button(
+    master=menu, 
+    image=done_photo, 
+    bg="#FFFFFF"
+    )
 
 # Start button
-start_pipeline_button = tk.Button(master=menu, image=play_photo, bg="#FFFFFF", state="disabled")
+start_pipeline_button = tk.Button(
+    master=menu, 
+    image=play_photo, 
+    bg="#FFFFFF", 
+    state="disabled"
+    )
 
 # Pack the start options
 start_pipeline_button.pack(side=tk.BOTTOM, fill=tk.X)
@@ -162,15 +193,28 @@ feature_points_1_frame = tk.Frame(
 feature_points_1_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
 
-add_points_button = tk.Button(master=feature_points_1_frame, image=add_points_photo, bg="#FFFFFF")
+add_points_button = tk.Button(
+    master=feature_points_1_frame, 
+    image=add_points_photo, 
+    bg="#FFFFFF"
+    )
+
+move_points_button = tk.Button(
+    master=feature_points_1_frame, 
+    image=move_photo, 
+    bg="#FFFFFF"
+    )
+
+delete_points_button = tk.Button(
+    master=feature_points_1_frame,
+    image=delete_photo,
+    bg="#FFFFFF"
+    )
+
+# Pack the feature point buttons
 add_points_button.pack(side=tk.LEFT)
-
-move_points_button = tk.Button(master=feature_points_1_frame, image=move_photo, bg="#FFFFFF")
 move_points_button.pack(side=tk.LEFT)
-
-delete_points_button = tk.Button(master=feature_points_1_frame, image=delete_photo, bg="#FFFFFF")
 delete_points_button.pack(side=tk.RIGHT, padx=(0.3*w,0))
-
 
 # Adding a separator
 separator = ttk.Separator(master=canvas_frame, orient=tk.VERTICAL)
@@ -185,15 +229,28 @@ feature_points_2_frame = tk.Frame(
     master=canvas_2, width=0.45*w, height=0.05*h, bg="#FFFFFF")
 feature_points_2_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
-add_points_button = tk.Button(master=feature_points_2_frame, image=add_points_photo, bg="#FFFFFF")
+add_points_button = tk.Button(
+    master=feature_points_2_frame, 
+    image=add_points_photo,
+    bg="#FFFFFF"
+    )
+
+move_points_button = tk.Button(
+    master=feature_points_2_frame,
+    image=move_photo,
+    bg="#FFFFFF"
+    )
+
+delete_points_button = tk.Button(
+    master=feature_points_2_frame, 
+    image=delete_photo, 
+    bg="#FFFFFF"
+    )
+
+# Pack the feature point buttons
 add_points_button.pack(side=tk.LEFT)
-
-move_points_button = tk.Button(master=feature_points_2_frame, image=move_photo, bg="#FFFFFF")
 move_points_button.pack(side=tk.LEFT)
-
-delete_points_button = tk.Button(master=feature_points_2_frame, image=delete_photo, bg="#FFFFFF")
 delete_points_button.pack(side=tk.RIGHT, padx=(0.3*w,0))
-
 
 # Run the app
 # -------------------------------------------------------------- #
