@@ -1,12 +1,18 @@
 """
 This file specifies the UI including the buttons and the layout of the UI.
 """
-import backend as bk
+# Local imports
+from backend import backend_pipeline as bkp
 
+# Functional imports
+import os
+import cv2 as cv
+import numpy as np
+
+# UI imports
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as fd
-import os
 
 # -------------------------------------------------------------- #
 # Global variables                                               #
@@ -20,6 +26,14 @@ output_path = os.path.join(project_path, 'output')
 rsc_path = os.path.join(project_path, 'rsc')
 ui_rsc_path = os.path.join(rsc_path, 'ui')
 
+# Images and feature points
+# -------------------------------------------------------------- #
+image_1 = None
+image_2 = None
+feature_points_1 = []
+feature_points_2 = []
+
+
 
 
 # -------------------------------------------------------------- #
@@ -32,23 +46,50 @@ def open_image_1():
     """
     Opens an image from the file system and displays it on the canvas.
     """
+    global img_1_path
+    
     path = fd.askopenfilename()
     
-    print(path)
+    img_1_path.set(path)
+    
+    print(f'Image 1 path set to {path}')
     
 def open_image_2():
     """
     Opens an image from the file system and displays it on the canvas.
     """
+    global img_2_path
+    
     path = fd.askopenfilename()
     
-    print(path)
-    
+    img_2_path.set(path)    
+
+    print(f'Image 2 path set to {path}')
+        
 def validate_and_load_images():
     """
     Validates the images and loads them into the canvas.
     """
+    global image_1
+    global image_2
+    global img_1_path
+    global img_2_path
+    
+    # Check if the image paths are valid
+    
+    # Load the images into memory
+    
+    # Check if the images are (approximately) the same ratio
+    
+    # Find the smaller image
+    
+    # Resize the larger image to the size of the smaller image
+    
+    # Display the images on the canvases
     pass
+    
+    
+    
 
 # Feature point buttons
 # -------------------------------------------------------------- #
@@ -56,37 +97,116 @@ def add_points_1():
     """
     Adds feature points to the image.
     """
+    global feature_points_1
+    global feature_points_2
+    
+    global image_1
+    global image_2
+    
+    # Get nearest pixel coordinates at mouse click
+    
+    # Add the pixel coordinates to the feature points list
+    
+    # Add a corresponding point to the other image's feature points list
+    
+    # Draw the feature points on the canvas for both images
     pass
 
 def add_points_2():
     """
     Adds feature points to the image.
     """
+    global feature_points_1
+    global feature_points_2
+    
+    global image_1
+    global image_2
+    
+    # Get nearest pixel coordinates at mouse click
+    
+    # Add the pixel coordinates to the feature points list
+    
+    # Add a corresponding point to the other image's feature points list
+    
+    # Draw the feature points on the canvas for both images
     pass
 
 def move_points_1():
     """
     Moves feature points on the image.
     """
+    global feature_points_1
+    global image_1
+    
+    # Get nearest feature point to mouse click
+    
+    # Click at new position
+    
+    # Update the feature point coordinates
+    
+    # Update the canvas
+    
     pass
 
 def move_points_2():
     """
     Moves feature points on the image.
     """
+    global feature_points_2
+    global image_2
+    
+    # Get nearest feature point to mouse click
+    
+    # Click at new position
+    
+    # Update the feature point coordinates
+    
+    # Update the canvas
+    
     pass
 
 def delete_points_1():
     """
     Deletes feature points on the image.
     """
+    global image_1
+    global image_2
+    
+    global feature_points_1
+    global feature_points_2
+    
+    # Get nearest feature point to mouse click
+    
+    # Find the index of the feature point in the feature points list
+    
+    # Delete the feature point from the feature points list
+    
+    # Delete the corresponding feature point from the other image's feature points list
+    
+    # Update the canvas
     pass
 
 def delete_points_2():
     """
     Deletes feature points on the image.
     """
+    global image_1
+    global image_2
+    
+    global feature_points_1
+    global feature_points_2
+    
+    # Get nearest feature point to mouse click
+    
+    # Find the index of the feature point in the feature points list
+    
+    # Delete the feature point from the feature points list
+    
+    # Delete the corresponding feature point from the other image's feature points list
+    
+    # Update the canvas
     pass
+
 
 # Pipeline buttons
 # -------------------------------------------------------------- #
@@ -94,12 +214,97 @@ def validate_settings():
     """
     Validates the settings and enables the start button.
     """
+    global image_1
+    global image_2
+    global feature_points_1
+    global feature_points_2
+    
+    global interpolation_steps
+    global IDW_q_parameter
+    global GAN_refinement_steps
+    
+    global target_resolution
+    global start_pipeline_button
+    
+    
+    if interpolation_steps.get() <= 1:
+        raise ValueError("Interpolation steps must be greater than 1.")
+    
+    if interpolation_steps.get() % 3 == 0:
+        raise ValueError("Bug in bilinear sampling. Interpolation steps must not be divisible by 3.")
+    
+    if IDW_q_parameter.get() <= 0:
+        raise ValueError("IDW q parameter must be greater than 0.")
+    
+    if GAN_refinement_steps.get() <= 0:
+        raise ValueError("GAN refinement steps must be greater than 0.")
+    
+    if target_resolution.get() not in ["original", "half", "quarter"]:
+        raise ValueError("Target resolution must be one of the following: original, half, quarter.")
+    
+    global start_pipeline_button
+    
+    start_pipeline_button.config(state="normal")
+    
+    print("Pipeline settings are in valid configuration. Start button enabled.")
+    
     pass
 
 def start_pipeline():
     """
     Starts the pipeline.
     """
+    
+    global interpolation_steps
+    global IDW_q_parameter
+    global GAN_refinement_steps
+    
+    global target_resolution
+    global target
+    
+    # Set resolution based on target resolution setting
+    case = target_resolution.get()
+    
+    match case:
+        
+        case "original":
+            pass
+        
+        case "half":
+            image_1 = cv.resize(image_1, (image_1.shape[0]//2, image_1.shape[1]//2))
+            image_2 = cv.resize(image_2, (image_2.shape[0]//2, image_2.shape[1]//2))
+            
+            feature_points_1 = np.array(feature_points_1) // 2
+            feature_points_2 = np.array(feature_points_2) // 2
+            
+        case "quarter":
+            image_1 = cv.resize(image_1, (image_1.shape[0]//4, image_1.shape[1]//4))
+            image_2 = cv.resize(image_2, (image_2.shape[0]//4, image_2.shape[1]//4))
+            
+            feature_points_1 = np.array(feature_points_1) // 4
+            feature_points_2 = np.array(feature_points_2) // 4
+            
+    print(f"Initiating pipeline with following settings:")
+    print(f"Interpolation steps: {interpolation_steps.get()}")
+    print(f"IDW q parameter: {IDW_q_parameter.get()}")
+    print(f"GAN refinement steps: {GAN_refinement_steps.get()}")
+    print(f"Target resolution: {target_resolution.get()}")
+    print(f"Target name: {target.get()}")
+    
+    
+    bkp.morph_faces(
+        img1=image_1,
+        img2=image_2,
+        facial_features_list=[feature_points_1, feature_points_2],
+        interpolation_steps=interpolation_steps.get(), 
+        idw_q_parameter=IDW_q_parameter.get(), 
+        gan_refinement_steps=GAN_refinement_steps.get(), 
+        output_path=output_path,
+        output_name=target.get() + '.mp4'
+    )
+    
+    print("Pipeline finished.")
+    print("Output saved to: ", os.path.join(output_path, target.get() + '.mp4'))
     pass
 
 
