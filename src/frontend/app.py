@@ -115,10 +115,6 @@ GAN_refinement_steps_slider = tk.Scale(
     foreground="#000000"
     )
 
-# Target name (text field)
-target_name_label = tk.Label(master=menu, text="Target Name", bg="#FFFFFF", foreground="#000000")
-target = tk.StringVar(value="facemorph")
-target_name_entry = tk.Entry(master=menu, textvariable=target, bg="#FFFFFF", foreground="#000000")
 
 
 # Pack the pipeline settings
@@ -128,8 +124,12 @@ IDW_q_parameter_slider.pack(side=tk.TOP, fill=tk.X)
 IDW_q_parameter_label.pack(side=tk.TOP, fill=tk.X, pady=(0,10))
 GAN_refinement_steps_slider.pack(side=tk.TOP, fill=tk.X)
 GAN_refinement_steps_label.pack(side=tk.TOP, fill=tk.X, pady=(0,10))
-target_name_label.pack(side=tk.TOP, fill=tk.X, pady=(0.1*h,0))
-target_name_entry.pack(side=tk.TOP, fill=tk.X, pady=(0, 0.2*h))
+
+
+# Target name (text field)
+target_name_label = tk.Label(master=menu, text="Target Name", bg="#FFFFFF", foreground="#000000")
+target = tk.StringVar(value="facemorph")
+target_name_entry = tk.Entry(master=menu, textvariable=target, bg="#FFFFFF", foreground="#000000")
 
 
 # Done button
@@ -141,6 +141,8 @@ start_pipeline_button = tk.Button(master=menu, image=play_photo, bg="#FFFFFF", s
 # Pack the start options
 start_pipeline_button.pack(side=tk.BOTTOM, fill=tk.X)
 done_button.pack(side=tk.BOTTOM, fill=tk.X)
+target_name_entry.pack(side=tk.BOTTOM, fill=tk.X, pady=(0, 10))
+target_name_label.pack(side=tk.BOTTOM, fill=tk.X, pady=(0.2*h,0))
 
 
 
