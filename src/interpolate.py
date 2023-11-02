@@ -134,16 +134,13 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
                 delta = interpolated_delta_field[x][y]
 
                 # Sample from the 2 images, remember delta is [x1, y1, x2, y2]
-                img1_sample = bilinear_sampling(img1.astype(
-                    float), float(x) + delta[0], float(y) + delta[1])
-                img2_sample = bilinear_sampling(img2.astype(
-                    float), float(x) + delta[-2], float(y) + delta[-1])
+                img1_sample = bilinear_sampling(img1.astype(float), float(x) + delta[0], float(y) + delta[1])
+                img2_sample = bilinear_sampling(img2.astype(float), float(x) + delta[-2], float(y) + delta[-1])
 
                 # weights are the time distance from the first to second image
 
                 # Compute the bilinear sampling
-                interpolated_image[x][y] = img1_sample * \
-                    (1 - t) + img2_sample * t
+                interpolated_image[x][y] = img1_sample * (1 - t) + img2_sample * t
 
         print(f"Interpolated image computed for t={t:.2f}")
 

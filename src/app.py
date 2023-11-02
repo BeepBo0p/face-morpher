@@ -58,7 +58,10 @@ def open_image_1():
     global load_button
     
     path = fd.askopenfilename(
-        filetypes=[('JPEG', '*.jpg'), ('PNG', '*.png')]
+        filetypes=[
+            ('Image Files', '*.jpg *.jpeg *.png'),
+            ('JPEG', '*.jpg *.jpeg'),
+            ('PNG', '*.png')]
     )
     
     if path == "":
@@ -79,7 +82,10 @@ def open_image_2():
     global load_button
     
     path = fd.askopenfilename(
-        filetypes=[('JPEG', '*.jpg'), ('PNG', '*.png')]
+        filetypes=[
+            ('Image Files', '*.jpg *.jpeg *.png'),
+            ('JPEG', '*.jpg *.jpeg'),
+            ('PNG', '*.png')]
     )
     
     if path == "":
@@ -108,6 +114,10 @@ def validate_and_load_images():
     image_1 = cv.imread(img_1_path.get())
     image_2 = cv.imread(img_2_path.get())
     
+    # Flip the images to RGB format
+    image_1 = image_1[:, :, ::-1]
+    image_2 = image_2[:, :, ::-1]
+    
     # Check if the images are (approximately) the same ratio
     ratio_1 = image_1.shape[0] / image_1.shape[1]
     ratio_2 = image_2.shape[0] / image_2.shape[1]
@@ -116,12 +126,13 @@ def validate_and_load_images():
         raise ValueError("Images are not the same ratio. Please crop them to proceed.")
     
     # Find the smaller image
-    w, h, _ = min(image_1.shape, image_2.shape)
+    h, w, _ = min(image_1.shape, image_2.shape)
+    
     
     
     # Resize the larger image to the size of the smaller image
-    image_1 = cv.resize(image_1, (h, w))
-    image_2 = cv.resize(image_2, (h, w))
+    image_1 = cv.resize(image_1, (w, h))
+    image_2 = cv.resize(image_2, (w, h))
 
     img_list = [image_1, image_2]
 
@@ -231,7 +242,7 @@ def interact_with_feature_points_1(event):
     
     x, y = event.x, event.y
     
-    if x < 0 or x > image_1.shape[1] or y < 0 or y > image_1.shape[0]:
+    if x < 0 or x >= image_1.shape[1] or y < 0 or y >= image_1.shape[0]:
         print("Mouse click outside of image.")
         return
     
@@ -482,6 +493,12 @@ def validate_settings():
     global start_pipeline_button
     
     
+    if len(feature_points_1) < 3 or len(feature_points_2) < 3:
+        raise ValueError("Not enough feature points. Please add at least 3 points to each image.")
+    
+    if len(feature_points_1) != len(feature_points_2):
+        raise ValueError("Feature points lists are not the same length. Image reload is required.")
+    
     if interpolation_steps.get() <= 1:
         raise ValueError("Interpolation steps must be greater than 1.")
     
@@ -548,31 +565,70 @@ def start_pipeline():
     # Set resolution based on target resolution setting
     case = target_resolution.get()
     
+    h, w, _ = min(image_1.shape, image_2.shape)
+    
+    print("Image width: ", w)
+    print("Image height: ", h)
+    
+    print("First 10 feature points: ", feature_points_1[:10])
+    
     match case:
         
         case "original":
             pass
         
         case "half":
-            image_1 = cv.resize(image_1, (image_1.shape[0]//2, image_1.shape[1]//2))
-            image_2 = cv.resize(image_2, (image_2.shape[0]//2, image_2.shape[1]//2))
+            image_1 = cv.resize(image_1, (w//2, h//2))
+            image_2 = cv.resize(image_2, (w//2, h//2))
             
-            feature_points_1 = np.array(feature_points_1) // 2
-            feature_points_2 = np.array(feature_points_2) // 2
+            feature_points_1 = [point//2 for point in feature_points_1]
+            feature_points_2 = [point//2 for point in feature_points_2]
             
         case "quarter":
-            image_1 = cv.resize(image_1, (image_1.shape[0]//4, image_1.shape[1]//4))
-            image_2 = cv.resize(image_2, (image_2.shape[0]//4, image_2.shape[1]//4))
+            image_1 = cv.resize(image_1, (w//4, h//4))
+            image_2 = cv.resize(image_2, (w//4, h//4))
             
-            feature_points_1 = np.array(feature_points_1) // 4
-            feature_points_2 = np.array(feature_points_2) // 4
+            feature_points_1 = [point//4 for point in feature_points_1]
+            feature_points_2 = [point//4 for point in feature_points_2]
             
     print(f"Initiating pipeline with following settings:")
     print(f"Interpolation steps: {interpolation_steps.get()}")
     print(f"IDW q parameter: {IDW_q_parameter.get()}")
     print(f"GAN refinement steps: {GAN_refinement_steps.get()}")
     print(f"Target resolution: {target_resolution.get()}")
+    print(f"Actual resolution: {image_1.shape[1]}x{image_1.shape[0]}")
     print(f"Target name: {target.get()}")
+    
+    # Plot faces with feature points
+    import matplotlib.pyplot as plt
+    
+    # Convert feature points to numpy array with shape (n, 2)
+    feature_points_1 = np.array(feature_points_1)
+    feature_points_2 = np.array(feature_points_2)
+    print("Feature points 1 shape: ", feature_points_1.shape)
+    
+    
+    plt.clf()
+    
+    plt.imshow(image_1)
+    #plt.scatter(feature_points_1[:, 0], feature_points_1[:, 1])
+    #plt.show()
+    
+    plt.clf()
+    
+    plt.imshow(image_2)
+    #plt.scatter(feature_points_2[:, 0], feature_points_2[:, 1])
+    #plt.show()
+    
+    
+    # Flip the images to correct channel order
+    image_1 = image_1[:, :, ::-1]
+    image_2 = image_2[:, :, ::-1]
+    
+    # Flip feature points to correct order
+    feature_points_1 = np.flip(feature_points_1, axis=1)
+    feature_points_2 = np.flip(feature_points_2, axis=1)
+    
     
     
     bkp.morph_faces(
