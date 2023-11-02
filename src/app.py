@@ -137,10 +137,10 @@ def validate_and_load_images():
     image_2_with_points = image_2.copy()
     
     for point in feature_points_1:
-        cv.circle(image_1_with_points, tuple(point), 1, (0, 255, 0), -1)
+        cv.circle(image_1_with_points, tuple(point), 2, (255, 0, 0), -1)
     
     for point in feature_points_2:
-        cv.circle(image_2_with_points, tuple(point), 1, (0, 255, 0), -1)
+        cv.circle(image_2_with_points, tuple(point), 2, (255, 0, 0), -1)
     
     # Create images in output folder as working copies
     cv.imwrite(os.path.join(output_path, "img1.jpg"), image_1)
@@ -158,13 +158,13 @@ def validate_and_load_images():
     
     # Get the center coordinates of the canvas
 
-    cv1_center = (canvas_1.winfo_width()//2, canvas_1.winfo_height()//2)
-    cv2_center = (canvas_2.winfo_width()//2, canvas_2.winfo_height()//2)
+    cv1_center = (0,0)#(canvas_1.winfo_width()//2, canvas_1.winfo_height()//2)
+    cv2_center = (0,0)#(canvas_2.winfo_width()//2, canvas_2.winfo_height()//2)
     
     
     # Place the image in the center of the canvas
-    canvas_1.create_image(cv1_center, image=photo_image_1, anchor=tk.CENTER)
-    canvas_2.create_image(cv2_center, image=photo_image_2, anchor=tk.CENTER)
+    canvas_1.create_image(cv1_center, image=photo_image_1, anchor=tk.NW)
+    canvas_2.create_image(cv2_center, image=photo_image_2, anchor=tk.NW)
     
     #photo_image_1.pack()
     #photo_image_2.pack()
@@ -188,13 +188,24 @@ def validate_and_load_images():
     #move_points_button_2.config(state="normal")
     delete_points_button_2.config(state="normal")
 
+    global done_button
+    done_button.config(state="normal")
     print("Images loaded successfully.")
-    
+        
     
 
 # Feature point buttons
 # -------------------------------------------------------------- #
-def interact_with_feature_points_1():
+
+# Check out how to bind events to the canvas
+def interact_with_feature_points_1(event):
+    
+    print(f"Mouse clicked at: {event.x}, {event.y}")
+    
+    global load_button
+    
+    if load_button["state"] == "disabled":
+        return
     
     global feature_points_1
     global feature_points_2
@@ -212,19 +223,19 @@ def interact_with_feature_points_1():
     global delete_points
     global add_points
     
-    # Get coordinates of mouse click
-    x, y = canvas_1.winfo_pointerx(), canvas_1.winfo_pointery()
+    x, y = event.x, event.y
     
-    # Transform the coordinates to the image coordinates
-    x, y = x - canvas_1.winfo_rootx(), y - canvas_1.winfo_rooty()
-
+    if x < 0 or x > image_1.shape[1] or y < 0 or y > image_1.shape[0]:
+        print("Mouse click outside of image.")
+        return
+    
     if add_points:
         
         # Add the coordinates to the feature points list
-        feature_points_1.append(np.array([x, y]))
+        feature_points_1 = np.append(feature_points_1, np.array([[x, y]]), axis=0)
         
         # Add a corresponding point to the other image's feature points list
-        feature_points_2.append(np.array([x, y]))
+        feature_points_2 = np.append(feature_points_2, np.array([[x, y]]), axis=0)
         
         
     if delete_points:
@@ -240,27 +251,110 @@ def interact_with_feature_points_1():
         if np.linalg.norm(nearest_feature_point - np.array([x, y])) < 10:
           
             # Find the index of the feature point in the feature points list
-            index = feature_points_1.index(nearest_feature_point)
+            index = np.where((feature_points_1 == nearest_feature_point).all(axis=1))[0][0]
             
             # Delete the feature point from the feature points list
-            feature_points_1.pop(index)
+            feature_points_1 = np.delete(feature_points_1, index, axis=0)
             
             # Delete the corresponding feature point from the other image's feature points list
-            feature_points_2.pop(index)
+            feature_points_2 = np.delete(feature_points_2, index, axis=0)
                 
     # Draw the feature points on the canvas for both images
     image_1_with_points = image_1.copy()
     image_2_with_points = image_2.copy()
     
     for point in feature_points_1:
-        cv.circle(image_1_with_points, tuple(point), 1, (0, 255, 0), -1)
+        cv.circle(image_1_with_points, tuple(point), 2, (255, 0, 0), -1)
     
     for point in feature_points_2:
-        cv.circle(image_2_with_points, tuple(point), 1, (0, 255, 0), -1)
+        cv.circle(image_2_with_points, tuple(point), 2, (255, 0, 0), -1)
         
     # Create photo images from the images
     photo_image_1 = ImageTk.PhotoImage(image=Image.fromarray(image_1_with_points))
     photo_image_2 = ImageTk.PhotoImage(image=Image.fromarray(image_2_with_points))
+    
+    canvas_1.create_image((0,0), image=photo_image_1, anchor=tk.NW)
+    canvas_2.create_image((0,0), image=photo_image_2, anchor=tk.NW)
+    
+
+def interact_with_feature_points_2(event):
+    
+    print(f"Mouse clicked at: {event.x}, {event.y}")
+    
+    global load_button
+    
+    if load_button["state"] == "disabled":
+        return
+    
+    global feature_points_1
+    global feature_points_2
+    
+    global image_1
+    global image_2
+    
+    global photo_image_1
+    global photo_image_2
+    
+    global canvas_1
+    global canvas_2
+    
+    global move_points
+    global delete_points
+    global add_points
+    
+    x, y = event.x, event.y
+    
+    if x < 0 or x > image_2.shape[1] or y < 0 or y > image_2.shape[0]:
+        print("Mouse click outside of image.")
+        return
+    
+    if add_points:
+        
+        # Add the coordinates to the feature points list
+        feature_points_1 = np.append(feature_points_1, np.array([[x, y]]), axis=0)
+        
+        # Add a corresponding point to the other image's feature points list
+        feature_points_2 = np.append(feature_points_2, np.array([[x, y]]), axis=0)
+        
+        
+    if delete_points:
+    
+        # Get nearest feature point to mouse click
+        nearest_feature_point = feature_points_2[0]
+        
+        for feature_point in feature_points_2:
+            if np.linalg.norm(feature_point - np.array([x, y])) < np.linalg.norm(nearest_feature_point - np.array([x, y])):
+                nearest_feature_point = feature_point
+                
+        # If point is close enough, move or delete it
+        if np.linalg.norm(nearest_feature_point - np.array([x, y])) < 10:
+          
+            # Find the index of the feature point in the feature points list
+            index = np.where((feature_points_2 == nearest_feature_point).all(axis=1))[0][0]
+            
+            # Delete the feature point from the feature points list
+            feature_points_1 = np.delete(feature_points_1, index, axis=0)
+            
+            # Delete the corresponding feature point from the other image's feature points list
+            feature_points_2 = np.delete(feature_points_2, index, axis=0)
+                
+    # Draw the feature points on the canvas for both images
+    image_1_with_points = image_1.copy()
+    image_2_with_points = image_2.copy()
+    
+    for point in feature_points_1:
+        cv.circle(image_1_with_points, tuple(point), 2, (255, 0, 0), -1)
+    
+    for point in feature_points_2:
+        cv.circle(image_2_with_points, tuple(point), 2, (255, 0, 0), -1)
+        
+    # Create photo images from the images
+    photo_image_1 = ImageTk.PhotoImage(image=Image.fromarray(image_1_with_points))
+    photo_image_2 = ImageTk.PhotoImage(image=Image.fromarray(image_2_with_points))
+    
+    canvas_1.create_image((0,0), image=photo_image_1, anchor=tk.NW)
+    canvas_2.create_image((0,0), image=photo_image_2, anchor=tk.NW)
+
 
 def set_add_points_1():
     global add_points
@@ -270,6 +364,18 @@ def set_add_points_1():
     delete_points = False
     
     print("Add points mode activated, add_points: ", add_points)
+    
+    global add_points_button_1
+    global add_points_button_2
+    
+    add_points_button_1.config(state="active")
+    add_points_button_2.config(state="active")
+    
+    global delete_points_button_1
+    global delete_points_button_2
+    
+    delete_points_button_1.config(state="normal")
+    delete_points_button_2.config(state="normal")    
     
 def set_delete_points_1():
     global add_points
@@ -586,7 +692,15 @@ canvas_1_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 canvas_2_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 # Defining the canvas for image 1
-canvas_1 = tk.Canvas(master=canvas_1_frame, width=0.45*w, height=0.95*h, bg="#FFFFFF")
+canvas_1 = tk.Canvas(
+    master=canvas_1_frame,
+    width=0.45*w,
+    height=0.95*h,
+    bg="#FFFFFF",
+    )
+
+canvas_1.bind("<Button-1>", interact_with_feature_points_1)
+
 canvas_1.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 
@@ -639,7 +753,15 @@ delete_points_button_1.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
 # Defining the canvas for image 2
-canvas_2 = tk.Canvas(master=canvas_2_frame, width=0.45*w, height=0.95*h, bg="#FFFFFF")
+canvas_2 = tk.Canvas(
+    master=canvas_2_frame,
+    width=0.45*w,
+    height=0.95*h,
+    bg="#FFFFFF",
+    )
+
+canvas_2.bind("<Button-1>", interact_with_feature_points_2)
+
 canvas_2.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 feature_points_2_frame = tk.Frame(
