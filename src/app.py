@@ -276,7 +276,6 @@ def interact_with_feature_points_1(event):
     canvas_1.create_image((0,0), image=photo_image_1, anchor=tk.NW)
     canvas_2.create_image((0,0), image=photo_image_2, anchor=tk.NW)
     
-
 def interact_with_feature_points_2(event):
     
     print(f"Mouse clicked at: {event.x}, {event.y}")
@@ -364,18 +363,7 @@ def set_add_points_1():
     delete_points = False
     
     print("Add points mode activated, add_points: ", add_points)
-    
-    global add_points_button_1
-    global add_points_button_2
-    
-    add_points_button_1.config(state="active")
-    add_points_button_2.config(state="active")
-    
-    global delete_points_button_1
-    global delete_points_button_2
-    
-    delete_points_button_1.config(state="normal")
-    delete_points_button_2.config(state="normal")    
+        
     
 def set_delete_points_1():
     global add_points
@@ -440,6 +428,34 @@ def start_pipeline():
     
     global target_resolution
     global target
+    
+    global image_1
+    global image_2
+    
+    global feature_points_1
+    global feature_points_2
+    
+    
+    # Check if output folder exists
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+        
+    # Check if interpolation folder exists
+    interpolation_path = os.path.join(output_path, 'interpolation')
+    projection_path = os.path.join(output_path, 'projection')
+    
+    if not os.path.exists(interpolation_path):
+        os.mkdir(interpolation_path)
+        
+    if not os.path.exists(projection_path):
+        os.mkdir(projection_path)
+        
+    # If interpolation & projection folders exist, delete their contents
+    for file in os.listdir(interpolation_path):
+        os.remove(os.path.join(interpolation_path, file))
+        
+    for file in os.listdir(projection_path):
+        os.remove(os.path.join(projection_path, file))
     
     # Set resolution based on target resolution setting
     case = target_resolution.get()
@@ -798,6 +814,21 @@ add_points_button_2.pack(side=tk.LEFT)
 delete_points_button_2.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
+def on_closing():
+    # Destroy all resources here
+
+    import gc
+    
+    gc.collect()
+    app.quit()
+    app.destroy()
+    
+
+app.protocol("WM_DELETE_WINDOW", on_closing)
+
+
 # Run the app
 # -------------------------------------------------------------- #
 app.mainloop()
+
+
