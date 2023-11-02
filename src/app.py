@@ -36,6 +36,10 @@ feature_points_1 = []
 feature_points_2 = []
 add_points = True
 delete_points = False
+move_points = False
+
+marked_point_1 = np.array([-1, -1])
+marked_point_2 = np.array([-1, -1])
 
 
 
@@ -168,8 +172,10 @@ def validate_and_load_images():
     
     #photo_image_1.pack()
     #photo_image_2.pack()
-    #canvas_1.update()
-    #canvas_2.update()
+    canvas_1.update()
+    canvas_2.update()
+    
+    app.update()
     
     # Enable the feature point buttons
     global add_points_button_1
@@ -181,11 +187,11 @@ def validate_and_load_images():
     global delete_points_button_2
     
     add_points_button_1.config(state="normal")
-    #move_points_button_1.config(state="normal")
+    move_points_button_1.config(state="normal")
     delete_points_button_1.config(state="normal")
     
     add_points_button_2.config(state="normal")
-    #move_points_button_2.config(state="normal")
+    move_points_button_2.config(state="normal")
     delete_points_button_2.config(state="normal")
 
     global done_button
@@ -236,8 +242,7 @@ def interact_with_feature_points_1(event):
         
         # Add a corresponding point to the other image's feature points list
         feature_points_2 = np.append(feature_points_2, np.array([[x, y]]), axis=0)
-        
-        
+            
     if delete_points:
     
         # Get nearest feature point to mouse click
@@ -258,7 +263,44 @@ def interact_with_feature_points_1(event):
             
             # Delete the corresponding feature point from the other image's feature points list
             feature_points_2 = np.delete(feature_points_2, index, axis=0)
+    
+    if move_points:
+        
+        global marked_point_1
+        
+        if np.array_equal(marked_point_1, np.array([-1, -1])):
+            
+            # Get nearest feature point to mouse click
+            nearest_feature_point = feature_points_1[0]
+            
+            for feature_point in feature_points_1:
+                if np.linalg.norm(feature_point - np.array([x, y])) < np.linalg.norm(nearest_feature_point - np.array([x, y])):
+                    nearest_feature_point = feature_point
+                    
+            # If point is close enough, move or delete it
+            if np.linalg.norm(nearest_feature_point - np.array([x, y])) < 10:
                 
+                marked_point_1 = nearest_feature_point
+                
+                print(f"Selected point: {marked_point_1}")
+                
+            else:
+                
+                print("No point selected.")
+                
+            return
+        
+        else:
+            
+            # Find the index of the feature point in the feature points list
+            index = np.where((feature_points_1 == marked_point_1).all(axis=1))[0][0]
+            
+            # Set the feature point to the mouse click coordinates
+            feature_points_1[index] = np.array([x, y])
+            
+            marked_point_1 = np.array([-1, -1])
+
+    
     # Draw the feature points on the canvas for both images
     image_1_with_points = image_1.copy()
     image_2_with_points = image_2.copy()
@@ -315,7 +357,6 @@ def interact_with_feature_points_2(event):
         # Add a corresponding point to the other image's feature points list
         feature_points_2 = np.append(feature_points_2, np.array([[x, y]]), axis=0)
         
-        
     if delete_points:
     
         # Get nearest feature point to mouse click
@@ -336,7 +377,41 @@ def interact_with_feature_points_2(event):
             
             # Delete the corresponding feature point from the other image's feature points list
             feature_points_2 = np.delete(feature_points_2, index, axis=0)
+          
+    if move_points:
+        
+        global marked_point_2
+        
+        if np.array_equal(marked_point_2, np.array([-1, -1])):
+            
+            # Get nearest feature point to mouse click
+            nearest_feature_point = feature_points_2[0]
+            
+            for feature_point in feature_points_2:
+                if np.linalg.norm(feature_point - np.array([x, y])) < np.linalg.norm(nearest_feature_point - np.array([x, y])):
+                    nearest_feature_point = feature_point
+                    
+            # If point is close enough, move or delete it
+            if np.linalg.norm(nearest_feature_point - np.array([x, y])) < 10:
                 
+                marked_point_2 = nearest_feature_point
+                print(f"Selected point: {marked_point_2}")
+            
+            else:    
+                print("No point selected.")
+                
+            return
+        
+        else:
+            
+            # Find the index of the feature point in the feature points list
+            index = np.where((feature_points_2 == marked_point_2).all(axis=1))[0][0]
+            
+            # Set the feature point to the mouse click coordinates
+            feature_points_2[index] = np.array([x, y])
+            
+            marked_point_2 = np.array([-1, -1])
+          
     # Draw the feature points on the canvas for both images
     image_1_with_points = image_1.copy()
     image_2_with_points = image_2.copy()
@@ -354,13 +429,24 @@ def interact_with_feature_points_2(event):
     canvas_1.create_image((0,0), image=photo_image_1, anchor=tk.NW)
     canvas_2.create_image((0,0), image=photo_image_2, anchor=tk.NW)
 
+def move_feature_points_1():
+    global add_points
+    global delete_points
+    global move_points
+    
+    add_points = False
+    delete_points = False
+    move_points = True
+
 
 def set_add_points_1():
     global add_points
     global delete_points
+    global move_points
     
     add_points = True
     delete_points = False
+    move_points = False
     
     print("Add points mode activated, add_points: ", add_points)
         
@@ -368,9 +454,11 @@ def set_add_points_1():
 def set_delete_points_1():
     global add_points
     global delete_points
+    global move_points
     
     add_points = False
     delete_points = True
+    move_points = False
     
     print("Delete points mode activated, delete_points: ", delete_points)
     
@@ -733,15 +821,15 @@ add_points_button_1 = tk.Button(
     state="disabled",
     command=set_add_points_1,
     )
-"""
+
 move_points_button_1 = tk.Button(
     master=feature_points_1_frame, 
     image=move_photo, 
     bg="#FFFFFF",
     state="disabled",
-    command=move_points_1,
+    command=move_feature_points_1,
     )
-"""
+
 delete_points_button_1 = tk.Button(
     master=feature_points_1_frame,
     image=delete_photo,
@@ -752,7 +840,7 @@ delete_points_button_1 = tk.Button(
 
 # Pack the feature point buttons
 add_points_button_1.pack(side=tk.LEFT)
-#move_points_button_1.pack(side=tk.LEFT)
+move_points_button_1.pack(side=tk.LEFT)
 delete_points_button_1.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
@@ -791,15 +879,15 @@ add_points_button_2 = tk.Button(
     state="disabled",
     command=set_add_points_1
     )
-"""
+
 move_points_button_2 = tk.Button(
     master=feature_points_2_frame,
     image=move_photo,
     bg="#FFFFFF",
     state="disabled",
-    command=move_points_2
+    command=move_feature_points_1,
     )
-"""
+
 delete_points_button_2 = tk.Button(
     master=feature_points_2_frame, 
     image=delete_photo, 
@@ -810,7 +898,7 @@ delete_points_button_2 = tk.Button(
 
 # Pack the feature point buttons
 add_points_button_2.pack(side=tk.LEFT)
-#move_points_button_2.pack(side=tk.LEFT)
+move_points_button_2.pack(side=tk.LEFT)
 delete_points_button_2.pack(side=tk.RIGHT, padx=(0.3*w,0))
 
 
