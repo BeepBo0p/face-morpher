@@ -80,6 +80,22 @@ def inverse_distance_interpolation(img1: np.ndarray, img2: np.ndarray, features1
         reverse_interpolated_pos_delta = feature_pos_delta * (1 - t)
 
         interpolated_features = features1 + interpolated_pos_delta
+        
+        # For each feature, make sure it is within the bounds of the image, otherwise project it onto the nearest edge
+        for i in range(interpolated_features.shape[0]):
+            x, y = interpolated_features[i]
+
+            if (x < 0):
+                x = 0
+            elif (x > w - 1):
+                x = w - 1
+
+            if (y < 0):
+                y = 0
+            elif (y > h - 1):
+                y = h - 1
+
+            interpolated_features[i] = np.array([x, y])
 
         # Round features to integers
         interpolated_features = interpolated_features.astype(int)
