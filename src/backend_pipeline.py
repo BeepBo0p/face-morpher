@@ -118,7 +118,7 @@ def morph_faces(
 
     # Step 4. Project the interpolated facial landmarks to the GAN.
 
-    projection_sequence = [io.v2.imread(img1_path)]
+    projection_sequence = []#[io.v2.imread(img1_path)]
 
     projection_path = os.path.join(output_path, 'projection')
 
