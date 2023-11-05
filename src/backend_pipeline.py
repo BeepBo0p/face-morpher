@@ -187,18 +187,6 @@ def post_process(output_path: str) -> None:
 
     print('==================== Intermediate Files Deleted ====================')
 
-
-def morph_latent_face(
-    img1: np.ndarray,
-    img2: np.ndarray,
-    output_path: str,
-    output_name: str,
-    interpolation_steps: int = interpolation_steps,
-    gan_refinement_steps: int = gan_refinement_steps
-) -> bool:
-    pass
-
-
 if __name__ == '__main__':
 
     img1, img2, img1_features, img2_features = pre_process(

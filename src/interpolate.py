@@ -490,42 +490,6 @@ def bilinear_sampling(img: np.ndarray, x: float, y: float) -> np.ndarray:
     return sampled_value
 
 
-def coordinate_transform(x: float, y: float, width_src: int, height_src: int, width_dst: int, height_dst: int) -> (float, float):
-    """Computes coordinate transform from source image to destination image.
-    Assumes that the source is bigger than the destination.
-
-    Args:
-        x (float): _description_
-        y (float): _description_
-        width_src (int): _description_
-        height_src (int): _description_
-        width_dst (int): _description_
-        height_dst (int): _description_
-    """
-    # Find width and height difference
-    width_diff = width_src - width_dst
-    height_diff = height_src - height_dst
-
-    # If width or height is within difference/2 of the edge, project onto the edge
-    if (x < width_diff/2):
-        x_t = 0
-    elif (x > width_src - width_diff/2):
-        x_t = width_src - 1
-
-    if (y < height_diff/2):
-        y_t = 0
-    elif (y > height_src - height_diff/2):
-        y_t = height_src - 1
-
-    # Otherwise, find how far along the image the coordinates are and scale them to the source image
-    x_t = ((x + 1) / width_dst) * width_src - 1
-    y_t = ((y + 1) / height_dst) * height_src - 1
-
-    return x_t, y_t
-
-    pass
-
-
 def test_inverse_distance_interpolation():
 
     print("=========== Testing inverse distance interpolation ===========")
