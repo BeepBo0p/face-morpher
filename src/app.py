@@ -158,8 +158,8 @@ def validate_and_load_images():
         cv.circle(image_2_with_points, tuple(point), 2, (255, 0, 0), -1)
     
     # Create images in output folder as working copies
-    cv.imwrite(os.path.join(output_path, "img1.jpg"), image_1)
-    cv.imwrite(os.path.join(output_path, "img2.jpg"), image_2)
+    cv.imwrite(os.path.join(output_path, "img1.jpg"), image_1[:, :, ::-1])
+    cv.imwrite(os.path.join(output_path, "img2.jpg"), image_2[:, :, ::-1])
     
     # Display the images on the canvases
     global canvas_1
