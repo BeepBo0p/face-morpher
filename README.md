@@ -48,15 +48,13 @@ The program was developed on a desktop:
 Environment specification can be found in environment.yml and activated with
 
 ```bash
-conda env create -f environment.yml
-mkdir output
-mkdir rsc/models
+conda env create -f environment.yml && mkdir output && mkdir rsc/models
 ```
 
 2 Machine learning models where used. One for face detection and one for interpolation refinement. The StyleGAN weights should download automatically when running the program, but here are wget commands for both models as needed. If there are problems with the StyleGAN weights then I suggest checking the documentation of the StyleGAN implementation
 
 ```bash
-wget https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/ffhq.pkl
+#wget https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada-pytorch/pretrained/ffhq.pkl
 wget http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2
 bunzip2 shape_predictor_68_face_landmarks.dat.bz2
 mv shape_predictor_68_face_landmarks.dat rsc/models/
