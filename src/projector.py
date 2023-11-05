@@ -6,6 +6,8 @@
 # distribution of this software and related documentation without an express
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 
+# Retrieved from https://github.com/NVlabs/stylegan2-ada-pytorch
+
 """Project given image to the latent space of pretrained network pickle."""
 
 import copy
